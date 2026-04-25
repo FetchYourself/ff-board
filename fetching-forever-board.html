@@ -64,7 +64,8 @@
   .board-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(288px,1fr));gap:11px;margin-bottom:20px;}
 
   /* DOG CARD */
-  .dog-card{background:var(--ff-card);border:1px solid var(--ff-border);border-radius:10px;overflow:hidden;transition:transform 0.15s,box-shadow 0.15s;position:relative;}
+  .dog-card{background:var(--ff-card);border:1px solid var(--ff-border);border-radius:10px;overflow:hidden;transition:transform 0.15s,box-shadow 0.15s;position:relative;display:flex;flex-direction:column;}
+  .card-body{padding:9px 13px;flex:1;}
   .dog-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,0.4);}
   .dog-card.has-flag{border-color:rgba(224,82,82,0.4);}
   .dog-card.trial{border-color:rgba(230,184,74,0.4);}
@@ -85,7 +86,6 @@
   .tag-orange{background:var(--ff-orange-dim);color:var(--ff-orange);border:1px solid rgba(232,128,58,0.3);}
   .tag-blue{background:rgba(91,155,213,0.12);color:var(--ff-blue);border:1px solid rgba(91,155,213,0.3);}
 
-  .card-body{padding:9px 13px;}
   .card-row{display:flex;gap:6px;margin-bottom:5px;align-items:flex-start;}
   .card-row:last-child{margin-bottom:0;}
   .row-icon{font-size:11px;flex-shrink:0;margin-top:1px;width:15px;}
@@ -340,6 +340,7 @@
     </div>
     <div class="header-actions">
       <button class="allergy-btn" onclick="openAllergyModal()">🚫 Allergies</button>
+      <button class="wall-btn" onclick="triggerSheetsSync()" style="color:#4caf74;border-color:rgba(76,175,116,0.4);background:rgba(76,175,116,0.08);" title="Sync profiles from Google Sheets">⟳ Sheets</button>
       <button class="wall-btn" onclick="openWigglesImport()" style="color:#F4BE40;border-color:rgba(244,190,64,0.4);background:rgba(244,190,64,0.08);" title="Import Wiggles from Square CSV">🐾 Wiggles</button>
       <button class="wall-btn" onclick="toggleWallMode()">📺 Wall</button>
       <button class="btn btn-primary btn-sm" onclick="showSection('add')">+ Add Dog</button>
@@ -359,6 +360,7 @@
   </div>
 </div>
 <div id="wigglesStatus" style="background:var(--ff-dark);padding:3px 18px;font-size:10px;color:var(--ff-muted);border-bottom:1px solid var(--ff-border);display:none;"></div>
+<div id="sheetsStatus" style="background:var(--ff-dark);padding:3px 18px;font-size:10px;color:#4caf74;border-bottom:1px solid var(--ff-border);display:none;"></div>
 
 <div class="main">
   <!-- BOARD -->
@@ -637,41 +639,41 @@ setInterval(updateClock, 10000);
 // DOG PROFILES
 // ════════════════════════════════════════
 const P = {
-  "Wallace":    {owner:"Peter Murphy",email:"ptmurphy63@gmail.com",phone:"604-868-3074",breed:"White Lab",weight:null,allergies:null,walkNotes:"Chases leaves. Strong puller.",otherNotes:"Attention barks",vaxExpiry:null,fixed:true,flag:null,groomed:false},
-  "Onyx":       {owner:"Sarah Boissonnault",email:"boissonnault@gmail.com",phone:"604-446-1776",breed:"Doberman",weight:null,allergies:null,walkNotes:"Slip lead. No meeting other dogs on leash.",otherNotes:"HIGH ENERGY, doesn't know when to stop.",vaxExpiry:null,fixed:true,flag:"High energy — no leash meetings with other dogs",groomed:false},
-  "Pickle":     {owner:"Chaela Hopkins",email:"Chaelah8@gmail.com",phone:"236-788-3950",breed:"Min Pin",weight:null,allergies:null,walkNotes:"Resource guards toys/food",otherNotes:"Naps, puppy lunches",vaxExpiry:null,fixed:true,flag:"Resource guards toys and food",groomed:false},
-  "Jean-Claude":{owner:"Nicole Koenig",email:"Koenignikki@gmail.com",phone:"778-239-4266",breed:"Frenchie",weight:null,allergies:"ONLY LAMB HEART — NO TREATS AT ALL",walkNotes:null,otherNotes:'Needs "nap" time (owner request)',vaxExpiry:"2025-05-23",fixed:true,flag:null,groomed:false},
-  "Gracie":     {owner:"Melissa Paterson",email:"meldynamic@hotmail.com",phone:"604-401-8445",breed:"English Bulldog",weight:null,allergies:"NO FISH",walkNotes:"Old timer — doesn't go far",otherNotes:"Raw refrigerated lunches. Can guard attendants during cuddles.",vaxExpiry:null,fixed:true,flag:"Can guard attendants during cuddles",groomed:false},
-  "Cosmo":      {owner:"Benny Nimmervol",email:"benny.nimmer@gmail.com",phone:"778-838-1876",breed:"Labradoodle (lg)",weight:null,allergies:null,walkNotes:"Strong. Reactive to scooters, bikes, akitas, mobility aids.",otherNotes:"Loves balls",vaxExpiry:null,fixed:true,flag:"Reactive: scooters, bikes, mobility aids",groomed:false},
-  "Butter":     {owner:"Stephanie Sun",email:"steph.sun29@gmail.com",phone:"514-945-2829",breed:"Doodle",weight:null,allergies:"No fowl! No grain — single ingredient protein only",walkNotes:"Great walker",otherNotes:"Doesn't like ears touched",vaxExpiry:"2025-05-11",fixed:true,flag:null,groomed:false},
-  "Grover":     {owner:"Aman Sangara",email:"aman.sangara@gmail.com",phone:"778-877-4647",breed:"Doodle X",weight:null,allergies:null,walkNotes:null,otherNotes:"High energy. Can pull.",vaxExpiry:null,fixed:true,flag:"WARNING: Marking, aggressive play, won't settle. M/F/Sat better days.",groomed:false},
-  "Zoe":        {owner:"Carolina Gutierrez",email:"carolina.gutierrez86@gmail.com",phone:"604-518-0448",breed:"Aussie Doodle",weight:null,allergies:null,walkNotes:"Playful with playful dogs",otherNotes:"Great daycare dog!",vaxExpiry:null,fixed:true,flag:"WARNING: Pulled chunk of fur, snapping at dogs",groomed:false},
+  "Wallace":    {owner:"Peter",email:"ptmurphy63@gmail.com",phone:"604-868-3074",breed:"White Lab",weight:null,allergies:null,walkNotes:"Chases leaves. Strong puller.",otherNotes:"Attention barks",vaxExpiry:null,fixed:true,flag:null,groomed:false},
+  "Onyx":       {owner:"Sarah",email:"boissonnault@gmail.com",phone:"604-446-1776",breed:"Doberman",weight:null,allergies:null,walkNotes:"Slip lead. No meeting other dogs on leash.",otherNotes:"HIGH ENERGY, doesn't know when to stop.",vaxExpiry:null,fixed:true,flag:"High energy — no leash meetings with other dogs",groomed:false},
+  "Pickle":     {owner:"Chaela",email:"Chaelah8@gmail.com",phone:"236-788-3950",breed:"Min Pin",weight:null,allergies:null,walkNotes:"Resource guards toys/food",otherNotes:"Naps, puppy lunches",vaxExpiry:null,fixed:true,flag:"Resource guards toys and food",groomed:false},
+  "Jean-Claude":{owner:"Nicole",email:"Koenignikki@gmail.com",phone:"778-239-4266",breed:"Frenchie",weight:null,allergies:"ONLY LAMB HEART — NO TREATS AT ALL",walkNotes:null,otherNotes:'Needs "nap" time (owner request)',vaxExpiry:"2025-05-23",fixed:true,flag:null,groomed:false},
+  "Gracie":     {owner:"Melissa",email:"meldynamic@hotmail.com",phone:"604-401-8445",breed:"English Bulldog",weight:null,allergies:"NO FISH",walkNotes:"Old timer — doesn't go far",otherNotes:"Raw refrigerated lunches. Can guard attendants during cuddles.",vaxExpiry:null,fixed:true,flag:"Can guard attendants during cuddles",groomed:false},
+  "Cosmo":      {owner:"Benny",email:"benny.nimmer@gmail.com",phone:"778-838-1876",breed:"Labradoodle (lg)",weight:null,allergies:null,walkNotes:"Strong. Reactive to scooters, bikes, akitas, mobility aids.",otherNotes:"Loves balls",vaxExpiry:null,fixed:true,flag:"Reactive: scooters, bikes, mobility aids",groomed:false},
+  "Butter":     {owner:"Stephanie",email:"steph.sun29@gmail.com",phone:"514-945-2829",breed:"Doodle",weight:null,allergies:"No fowl! No grain — single ingredient protein only",walkNotes:"Great walker",otherNotes:"Doesn't like ears touched",vaxExpiry:"2025-05-11",fixed:true,flag:null,groomed:false},
+  "Grover":     {owner:"Aman",email:"aman.sangara@gmail.com",phone:"778-877-4647",breed:"Doodle X",weight:null,allergies:null,walkNotes:null,otherNotes:"High energy. Can pull.",vaxExpiry:null,fixed:true,flag:"WARNING: Marking, aggressive play, won't settle. M/F/Sat better days.",groomed:false},
+  "Zoe":        {owner:"Carolina",email:"carolina.gutierrez86@gmail.com",phone:"604-518-0448",breed:"Aussie Doodle",weight:null,allergies:null,walkNotes:"Playful with playful dogs",otherNotes:"Great daycare dog!",vaxExpiry:null,fixed:true,flag:"WARNING: Pulled chunk of fur, snapping at dogs",groomed:false},
   "Melo":       {owner:"Bobby",email:"bobbypooni@gmail.com",phone:"604-907-4443",breed:"Whoodle",weight:null,allergies:null,walkNotes:"Still learning manners",otherNotes:null,vaxExpiry:null,fixed:false,flag:"Won't stop mounting, barking timeouts",groomed:false},
-  "Theo":       {owner:"Eileen Hallam",email:null,phone:"778-995-7665",breed:"Mini Bernadoodle",weight:null,allergies:null,walkNotes:"Puppy — learning leash",otherNotes:null,vaxExpiry:"2025-09-29",fixed:false,flag:"Mounting behaviour",groomed:false},
-  "Bear":       {owner:"Colin Naughton",email:"colin.e.naughton@gmail.com",phone:"778-751-9090",breed:"Shepherd Mix",weight:null,allergies:null,walkNotes:null,otherNotes:null,vaxExpiry:null,fixed:false,flag:"ON TIMEOUT: marking, resource guards toys, can't take treats in group",groomed:false},
-  "Frankie":    {owner:"Danny Boone",email:"dbliy12@hotmail.com",phone:"604-725-3312",breed:"Chihuahua",weight:null,allergies:null,walkNotes:null,otherNotes:null,vaxExpiry:null,fixed:true,flag:"WARNING: Rude play, bites staff during break-up. Next convo = goodbye.",groomed:false},
-  "Luna":       {owner:"Wolfe Bethel",email:"wolfebethel@gmail.com",phone:"778-835-3479",breed:"Chihuahua",weight:null,allergies:null,walkNotes:null,otherNotes:"Barks at big dogs.",vaxExpiry:null,fixed:true,flag:"WARNING (Mar 31 2026): Guarding toys/people, bearing teeth",groomed:false},
-  "Maggie":     {owner:"Suzanne Leach",email:"seleach@telus.net",phone:"778-872-6882",breed:"Mini Bernadoodle",weight:null,allergies:"Chicken and beef — avoid",walkNotes:"4-month puppy",otherNotes:null,vaxExpiry:"2026-01-31",fixed:true,flag:"Persistent whining — may be triggered by male staff",groomed:false},
-  "Apollo":     {owner:"Aaron Edwards",email:"a.d.edwards1@proton.me",phone:"604-961-0253",breed:"Blue Heeler Mix",weight:null,allergies:"No — HATES veggies",walkNotes:"Very strong. Needs pee walk ASAP in AM.",otherNotes:"Nervous of quick movements.",vaxExpiry:null,fixed:true,flag:null,groomed:false},
-  "JJ":         {owner:"Paul Martin",email:"pgm1969@hotmail.com",phone:"778-994-4510",breed:"Jack Russell",weight:null,allergies:null,walkNotes:"No manners. Flight risk. Will go after anything.",otherNotes:"Lashes out in intense play.",vaxExpiry:"2025-06-06",fixed:true,flag:"Flight risk — lashes out in intense play",groomed:false},
-  "Penny":      {owner:"Maureen Mogambi",email:"reenmaura@yahoo.com",phone:"778-389-0777",breed:"Shih Tzu-Bichon",weight:null,allergies:null,walkNotes:"Good walker",otherNotes:"Submissive — develop relationship during downtime",vaxExpiry:null,fixed:true,flag:null,groomed:false},
-  "Lucy":       {owner:"Anna Sutherland",email:"annaleighsutherland@gmail.com",phone:"604-308-6339",breed:"Labradoodle",weight:null,allergies:null,walkNotes:"Good walker",otherNotes:"Used to larger daycare — wants to play and burn energy",vaxExpiry:null,fixed:true,flag:null,groomed:false},
-  "Mochi":      {owner:"Klaus Arp",email:"klarpgue@gmail.com",phone:"778-686-5780",breed:"Cockapoo",weight:null,allergies:"Nope — loves chicken heart",walkNotes:null,otherNotes:"Grooming dog. Anxious — mind big dogs in face.",vaxExpiry:null,fixed:true,flag:null,groomed:true},
+  "Theo":       {owner:"Eileen",email:null,phone:"778-995-7665",breed:"Mini Bernadoodle",weight:null,allergies:null,walkNotes:"Puppy — learning leash",otherNotes:null,vaxExpiry:"2025-09-29",fixed:false,flag:"Mounting behaviour",groomed:false},
+  "Bear":       {owner:"Colin",email:"colin.e.naughton@gmail.com",phone:"778-751-9090",breed:"Shepherd Mix",weight:null,allergies:null,walkNotes:null,otherNotes:null,vaxExpiry:null,fixed:false,flag:"ON TIMEOUT: marking, resource guards toys, can't take treats in group",groomed:false},
+  "Frankie":    {owner:"Danny",email:"dbliy12@hotmail.com",phone:"604-725-3312",breed:"Chihuahua",weight:null,allergies:null,walkNotes:null,otherNotes:null,vaxExpiry:null,fixed:true,flag:"WARNING: Rude play, bites staff during break-up. Next convo = goodbye.",groomed:false},
+  "Luna":       {owner:"Wolfe",email:"wolfebethel@gmail.com",phone:"778-835-3479",breed:"Chihuahua",weight:null,allergies:null,walkNotes:null,otherNotes:"Barks at big dogs.",vaxExpiry:null,fixed:true,flag:"WARNING (Mar 31 2026): Guarding toys/people, bearing teeth",groomed:false},
+  "Maggie":     {owner:"Suzanne",email:"seleach@telus.net",phone:"778-872-6882",breed:"Mini Bernadoodle",weight:null,allergies:"Chicken and beef — avoid",walkNotes:"4-month puppy",otherNotes:null,vaxExpiry:"2026-01-31",fixed:true,flag:"Persistent whining — may be triggered by male staff",groomed:false},
+  "Apollo":     {owner:"Aaron",email:"a.d.edwards1@proton.me",phone:"604-961-0253",breed:"Blue Heeler Mix",weight:null,allergies:"No — HATES veggies",walkNotes:"Very strong. Needs pee walk ASAP in AM.",otherNotes:"Nervous of quick movements.",vaxExpiry:null,fixed:true,flag:null,groomed:false},
+  "JJ":         {owner:"Paul",email:"pgm1969@hotmail.com",phone:"778-994-4510",breed:"Jack Russell",weight:null,allergies:null,walkNotes:"No manners. Flight risk. Will go after anything.",otherNotes:"Lashes out in intense play.",vaxExpiry:"2025-06-06",fixed:true,flag:"Flight risk — lashes out in intense play",groomed:false},
+  "Penny":      {owner:"Maureen",email:"reenmaura@yahoo.com",phone:"778-389-0777",breed:"Shih Tzu-Bichon",weight:null,allergies:null,walkNotes:"Good walker",otherNotes:"Submissive — develop relationship during downtime",vaxExpiry:null,fixed:true,flag:null,groomed:false},
+  "Lucy":       {owner:"Anna",email:"annaleighsutherland@gmail.com",phone:"604-308-6339",breed:"Labradoodle",weight:null,allergies:null,walkNotes:"Good walker",otherNotes:"Used to larger daycare — wants to play and burn energy",vaxExpiry:null,fixed:true,flag:null,groomed:false},
+  "Mochi":      {owner:"Klaus",email:"klarpgue@gmail.com",phone:"778-686-5780",breed:"Cockapoo",weight:null,allergies:"Nope — loves chicken heart",walkNotes:null,otherNotes:"Grooming dog. Anxious — mind big dogs in face.",vaxExpiry:null,fixed:true,flag:null,groomed:true},
   "Val":        {owner:"Unknown",email:null,phone:null,breed:"Unknown",weight:null,allergies:null,walkNotes:null,otherNotes:null,vaxExpiry:null,fixed:true,flag:null,groomed:false},
-  "Noodle":     {owner:"Carmen Cuevas",email:"carmeng.cuevas@gmail.com",phone:"604-781-2635",breed:"Poodle Mix",weight:null,allergies:null,walkNotes:null,otherNotes:"Kaori grooming client",vaxExpiry:null,fixed:true,flag:null,groomed:true},
-  "Thatcher":   {owner:"Ryan Richdale",email:"ryanrichdale@gmail.com",phone:"604-812-8828",breed:"Lab puppy",weight:null,allergies:null,walkNotes:null,otherNotes:"Puppy — intact",vaxExpiry:null,fixed:false,flag:null,groomed:false},
+  "Noodle":     {owner:"Carmen",email:"carmeng.cuevas@gmail.com",phone:"604-781-2635",breed:"Poodle Mix",weight:null,allergies:null,walkNotes:null,otherNotes:"Kaori grooming client",vaxExpiry:null,fixed:true,flag:null,groomed:true},
+  "Thatcher":   {owner:"Ryan",email:"ryanrichdale@gmail.com",phone:"604-812-8828",breed:"Lab puppy",weight:null,allergies:null,walkNotes:null,otherNotes:"Puppy — intact",vaxExpiry:null,fixed:false,flag:null,groomed:false},
   "Poppi":      {owner:"Amy McCarthy",email:"amymccarthy2014@gmail.com",phone:"604-340-1934",breed:"Golden Retriever",weight:null,allergies:null,walkNotes:"Good girl!",otherNotes:"Nothing of concern",vaxExpiry:null,fixed:true,flag:null,groomed:false},
   "Big":        {owner:"Unknown",email:null,phone:null,breed:"Unknown",weight:null,allergies:null,walkNotes:null,otherNotes:null,vaxExpiry:null,fixed:true,flag:null,groomed:false},
-  "Ellie":      {owner:"Ashley Soloway",email:"ashley.soloway@gmail.com",phone:"204-612-8478",breed:"Springer x Poodle",weight:null,allergies:"Chicken",walkNotes:null,otherNotes:"Very anxious — half days only until settled",vaxExpiry:null,fixed:true,flag:"Very anxious — half days only",groomed:false},
-  "Comi":       {owner:"Sarah Cho",email:"sarahcho811@gmail.com",phone:"778-822-6050",breed:"Toy Poodle",weight:null,allergies:null,walkNotes:"Working on socialization",otherNotes:null,vaxExpiry:null,fixed:true,flag:null,groomed:false},
-  "Suki":       {owner:"Dave Kruzeniski",email:"david.kruzeniski@gmail.com",phone:"778-522-0905",breed:"Cane Corso/Shep/Malamute",weight:null,allergies:null,walkNotes:null,otherNotes:null,vaxExpiry:null,fixed:true,flag:null,groomed:false},
+  "Ellie":      {owner:"Ashley",email:"ashley.soloway@gmail.com",phone:"204-612-8478",breed:"Springer x Poodle",weight:null,allergies:"Chicken",walkNotes:null,otherNotes:"Very anxious — half days only until settled",vaxExpiry:null,fixed:true,flag:"Very anxious — half days only",groomed:false},
+  "Comi":       {owner:"Sarah",email:"sarahcho811@gmail.com",phone:"778-822-6050",breed:"Toy Poodle",weight:null,allergies:null,walkNotes:"Working on socialization",otherNotes:null,vaxExpiry:null,fixed:true,flag:null,groomed:false},
+  "Suki":       {owner:"Dave",email:"david.kruzeniski@gmail.com",phone:"778-522-0905",breed:"Cane Corso/Shep/Malamute",weight:null,allergies:null,walkNotes:null,otherNotes:null,vaxExpiry:null,fixed:true,flag:null,groomed:false},
   "Lil Hen":    {owner:"Unknown",email:null,phone:null,breed:"Unknown",weight:null,allergies:null,walkNotes:null,otherNotes:null,vaxExpiry:null,fixed:true,flag:null,groomed:false},
-  "Shayna":     {owner:"Sophia Blackstone",email:"sophieb02@me.com",phone:"480-370-9157",breed:"Chiweenie",weight:null,allergies:"Chicken",walkNotes:null,otherNotes:"Anxious",vaxExpiry:null,fixed:true,flag:null,groomed:false},
+  "Shayna":     {owner:"Sophia",email:"sophieb02@me.com",phone:"480-370-9157",breed:"Chiweenie",weight:null,allergies:"Chicken",walkNotes:null,otherNotes:"Anxious",vaxExpiry:null,fixed:true,flag:null,groomed:false},
   "Cory":       {owner:"Unknown",email:null,phone:null,breed:"Unknown",weight:null,allergies:null,walkNotes:null,otherNotes:null,vaxExpiry:null,fixed:true,flag:null,groomed:false},
-  "Hershey":    {owner:"Susie Howson",email:"susiehowson@hotmail.com",phone:"604-816-5664",breed:"Havanese",weight:null,allergies:null,walkNotes:"Puppy energy",otherNotes:"Not fixed — will be in fall",vaxExpiry:null,fixed:false,flag:null,groomed:false},
-  "Dubu":       {owner:"Yoony Patterson",email:"yoony_kim@hotmail.com",phone:"604-715-8372",breed:"Poochon/Maltese",weight:null,allergies:"YES — Chicken",walkNotes:null,otherNotes:null,vaxExpiry:null,fixed:true,flag:null,groomed:false},
-  "Henry":      {owner:"Emily Gellis",email:"emflorence@gmail.com",phone:"604-356-5004",breed:"Berner",weight:null,allergies:"No Poultry",walkNotes:"Can stop — give a pull and he'll walk",otherNotes:null,vaxExpiry:"2025-05-11",fixed:true,flag:null,groomed:false},
-  "Doris":      {owner:"Adam Dhalla",email:"adamdhalla474@gmail.com",phone:null,breed:"Whippet",weight:null,allergies:"No peanuts — allergic to insect stings",walkNotes:null,otherNotes:null,vaxExpiry:null,fixed:true,flag:null,groomed:false},
+  "Hershey":    {owner:"Susie",email:"susiehowson@hotmail.com",phone:"604-816-5664",breed:"Havanese",weight:null,allergies:null,walkNotes:"Puppy energy",otherNotes:"Not fixed — will be in fall",vaxExpiry:null,fixed:false,flag:null,groomed:false},
+  "Dubu":       {owner:"Yoony",email:"yoony_kim@hotmail.com",phone:"604-715-8372",breed:"Poochon/Maltese",weight:null,allergies:"YES — Chicken",walkNotes:null,otherNotes:null,vaxExpiry:null,fixed:true,flag:null,groomed:false},
+  "Henry":      {owner:"Emily",email:"emflorence@gmail.com",phone:"604-356-5004",breed:"Berner",weight:null,allergies:"No Poultry",walkNotes:"Can stop — give a pull and he'll walk",otherNotes:null,vaxExpiry:"2025-05-11",fixed:true,flag:null,groomed:false},
+  "Doris":      {owner:"Adam",email:"adamdhalla474@gmail.com",phone:null,breed:"Whippet",weight:null,allergies:"No peanuts — allergic to insect stings",walkNotes:null,otherNotes:null,vaxExpiry:null,fixed:true,flag:null,groomed:false},
   "Echo":       {owner:"Heike",email:"royesheike@gmail.com",phone:"604-562-4962",breed:"Chihuahua Mix",weight:null,allergies:"Chicken",walkNotes:"Good walker",otherNotes:null,vaxExpiry:null,fixed:true,flag:null,groomed:false},
 };
 
@@ -1037,6 +1039,7 @@ function archiveDay() {
   });
   dogs = [];
   window.removedToday = [];
+  saveState();
   renderBoard(); renderArchive(); showSection('archive');
 }
 
@@ -1522,6 +1525,296 @@ function confirmRemove() {
   closeRemoveModal();
   renderBoard();
 }
+
+
+
+// ════════════════════════════════════════
+// GOOGLE SHEETS SYNC — read profiles on load
+// ════════════════════════════════════════
+const WORKER_URL = 'https://ff-proxy.jay-302.workers.dev';
+
+// Color codes from the sheet → status
+const SHEET_STATUS = {
+  'FFFF0000': 'inactive',   // Red
+  'FFFF9900': 'inactive',   // Orange  
+  'FFFFFF00': 'inactive',   // Yellow
+  'FF00FF00': 'active',     // Green
+  'FF4A86E8': 'active',     // Blue (treat as active)
+  'FF0000FF': 'active',     // Dark Blue (treat as active)
+  'FFE69138': 'active',     // Brown (treat as active)
+};
+
+let sheetsLoaded = false;
+let sheetsLoadTime = null;
+
+async function loadFromSheets() {
+  try {
+    const statusEl = document.getElementById('sheetsStatus');
+    if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = '🔄 Syncing profiles from Google Sheets...'; }
+
+    const resp = await fetch(WORKER_URL + '?action=sheets');
+    if (!resp.ok) throw new Error('Sheets fetch failed: ' + resp.status);
+    const data = await resp.json();
+
+    if (!data.values || data.values.length < 2) throw new Error('No data in sheet');
+
+    const headers = data.values[0].map(h => (h||'').trim().toLowerCase());
+    const rows = data.values.slice(1);
+
+    // Map header names to indices — matches actual sheet column order:
+    // Dog Name | Owner | Email | Phone | Partner | Breed | Weight | M/F |
+    // Allergies | Walking Notes | App Notes | Dog Bday | First Day |
+    // Next Vax | Vax Link | How Found | Legacy | Cannot Be With |
+    // Permanent Flag | Warning Level | Warning Date/Reason
+    const col = {
+      name:      headers.findIndex(h => h.includes('dog name')),
+      owner:     headers.findIndex(h => h.includes('owner') && !h.includes('email') && !h.includes('phone')),
+      email:     headers.findIndex(h => h.includes('email')),
+      phone:     headers.findIndex(h => h.includes('phone')),
+      partner:   headers.findIndex(h => h.includes('partner') || h.includes('pickup')),
+      breed:     headers.findIndex(h => h.includes('breed')),
+      weight:    headers.findIndex(h => h.includes('weight')),
+      sex:       headers.findIndex(h => h.trim() === 'm/f'),
+      allergies: headers.findIndex(h => h.includes('allerg')),
+      walkNotes: headers.findIndex(h => h.includes('walking')),
+      appNotes:  headers.findIndex(h => h.includes('app notes')),
+      bday:      headers.findIndex(h => h.includes('bday') || h.includes('birthday')),
+      vaxExpiry: headers.findIndex(h => h.includes('vax') && h.includes('update')),
+      cannotWith:headers.findIndex(h => h.includes('cannot')),
+      permFlag:  headers.findIndex(h => h.includes('permanent flag')),
+      warnLevel: headers.findIndex(h => h.includes('warning level')),
+      warning:   headers.findIndex(h => h.includes('warning date')),
+    };
+
+    let loaded = 0, skipped = 0;
+
+    rows.forEach(function(row) {
+      const name = (row[col.name] || '').trim();
+      if (!name) return;
+
+      // Skip inactive colors (red/orange/yellow)
+      // Note: Sheet API doesn't return cell colors via values endpoint
+      // We use Legend + Warning columns to determine status instead
+      const legend = col.legend >= 0 ? (row[col.legend] || '') : '';
+      const warning = col.warning >= 0 ? (row[col.warning] || '') : '';
+
+      // Skip dogs explicitly marked as inactive via warning text
+      const inactiveKeywords = ['no more service', 'given the boot', 'removed', 'banned', 'last day'];
+      const isInactive = inactiveKeywords.some(k => warning.toLowerCase().includes(k));
+      if (isInactive) { skipped++; return; }
+
+      // Build/update profile
+      const profile = P[name] || {};
+
+      // Only update fields that are empty in the hardcoded profile
+      // (Sheet is source of truth, but don't wipe runtime changes)
+      if (col.owner >= 0 && row[col.owner]) {
+        // First name only — no last name in the app
+        const fullName = (row[col.owner] || '').trim();
+        profile.owner = fullName.split(' ')[0] || fullName;
+      }
+      if (!profile.email && col.email >= 0) profile.email = row[col.email] || profile.email;
+      if (!profile.phone && col.phone >= 0) profile.phone = row[col.phone] || profile.phone;
+      if (!profile.breed && col.breed >= 0) profile.breed = row[col.breed] || profile.breed;
+      if (col.allergies >= 0 && row[col.allergies]) profile.allergies = row[col.allergies];
+      if (col.walkNotes >= 0 && row[col.walkNotes]) profile.walkNotes = row[col.walkNotes];
+      if (col.otherNotes >= 0 && row[col.otherNotes]) profile.otherNotes = row[col.otherNotes];
+      if (col.vaxExpiry >= 0 && row[col.vaxExpiry]) profile.vaxExpiry = row[col.vaxExpiry];
+      if (col.weight >= 0 && row[col.weight]) profile.weight = row[col.weight];
+      if (col.fixed >= 0 && row[col.fixed]) profile.fixed = row[col.fixed].toLowerCase().includes('y');
+      if (col.groom >= 0 && row[col.groom]) profile.groomed = row[col.groom].toLowerCase().includes('y');
+      if (col.cannotWith >= 0 && row[col.cannotWith]) profile._cannotWith = row[col.cannotWith];
+      if (col.permFlag >= 0 && row[col.permFlag]) profile.flag = row[col.permFlag];
+      if (col.warnLevel >= 0 && row[col.warnLevel]) profile._warnLevel = row[col.warnLevel];
+      if (col.appNotes >= 0 && row[col.appNotes]) {
+        profile._permanentNotes = profile._permanentNotes || [];
+        if (row[col.appNotes] && !profile._permanentNotes.some(n => n.text === row[col.appNotes])) {
+          profile._permanentNotes.push({ date: 'From Sheet', text: row[col.appNotes] });
+        }
+      }
+
+      // Warning date/reason from sheet
+      if (col.warning >= 0 && row[col.warning] && !profile._warnLevel) {
+        profile._sheetWarning = row[col.warning];
+      }
+
+      P[name] = profile;
+      loaded++;
+    });
+
+    sheetsLoaded = true;
+    sheetsLoadTime = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+
+    if (statusEl) {
+      statusEl.textContent = '✅ Profiles synced from Sheet (' + loaded + ' dogs) — ' + sheetsLoadTime;
+      setTimeout(() => { if(statusEl) statusEl.style.display = 'none'; }, 4000);
+    }
+
+    // Also update the add-dog datalist with all names from sheet
+    populateDl();
+    renderBoard();
+
+    console.log('Sheets loaded:', loaded, 'skipped (inactive):', skipped);
+
+  } catch(err) {
+    console.warn('Sheets sync failed:', err.message);
+    const statusEl = document.getElementById('sheetsStatus');
+    if (statusEl) {
+      statusEl.textContent = '⚠️ Sheet sync failed — using cached profiles';
+      statusEl.style.color = 'var(--ff-yellow)';
+      setTimeout(() => { if(statusEl) statusEl.style.display = 'none'; }, 3000);
+    }
+  }
+}
+
+// ── Sync button in header
+function triggerSheetsSync() {
+  loadFromSheets();
+}
+
+// ════════════════════════════════════════
+// LOCAL STORAGE — persist board state across sessions
+// ════════════════════════════════════════
+const LS_DOGS = 'ff_dogs_today';
+const LS_DATE = 'ff_board_date';
+const LS_ARCHIVE = 'ff_archive';
+const LS_PROFILES = 'ff_profiles'; // permanent profile overrides
+const LS_REMOVED = 'ff_removed_today';
+
+function todayStr() {
+  return new Date().toLocaleDateString('en-CA');
+}
+
+function saveState() {
+  try {
+    // Save today's dogs (daily state only — no permanent profile data)
+    const dogState = dogs.map(function(d) {
+      return {
+        id: d.id,
+        name: d.name,
+        arrival: d.arrival,
+        type: d.type,
+        pen: d.pen,
+        meals: d.meals,
+        meals_fed: d.meals_fed,
+        groom: d.groom,
+        walks: d.walks,
+        energy: d.energy,
+        notes: d.notes  // today's daily notes only
+      };
+    });
+    localStorage.setItem(LS_DOGS, JSON.stringify(dogState));
+    localStorage.setItem(LS_DATE, todayStr());
+    localStorage.setItem(LS_REMOVED, JSON.stringify(window.removedToday || []));
+    // Save archive
+    localStorage.setItem(LS_ARCHIVE, JSON.stringify(archive));
+  } catch(e) {
+    console.warn('localStorage save failed:', e);
+  }
+}
+
+function saveProfiles() {
+  // Save ONLY permanent profile overrides (flags, talking points, vax dates, etc)
+  // These are changes leads have explicitly saved — not daily notes
+  try {
+    const overrides = {};
+    Object.keys(P).forEach(function(name) {
+      const p = P[name];
+      const override = {};
+      // Only save fields that can be edited/updated — not the base seeded data
+      if (p._talkingPoint) override._talkingPoint = p._talkingPoint;
+      if (p._attendantMsg) override._attendantMsg = p._attendantMsg;
+      if (p._warnLevel) override._warnLevel = p._warnLevel;
+      if (p._flagCategory) override._flagCategory = p._flagCategory;
+      if (p.flag && p._flagCategory) override.flag = p.flag; // only save promoted flags
+      if (p.vaxExpiry) override.vaxExpiry = p.vaxExpiry;
+      if (p.weight) override.weight = p.weight;
+      if (p._permanentNotes) override._permanentNotes = p._permanentNotes;
+      if (Object.keys(override).length > 0) overrides[name] = override;
+    });
+    localStorage.setItem(LS_PROFILES, JSON.stringify(overrides));
+  } catch(e) {
+    console.warn('Profile save failed:', e);
+  }
+}
+
+function loadState() {
+  try {
+    // Load profile overrides first
+    const savedProfiles = localStorage.getItem(LS_PROFILES);
+    if (savedProfiles) {
+      const overrides = JSON.parse(savedProfiles);
+      Object.keys(overrides).forEach(function(name) {
+        if (P[name]) {
+          Object.assign(P[name], overrides[name]);
+        }
+      });
+    }
+
+    // Check if saved board is from today
+    const savedDate = localStorage.getItem(LS_DATE);
+    if (savedDate !== todayStr()) {
+      // It's a new day — don't load stale dogs
+      // But do keep the archive
+      const savedArchive = localStorage.getItem(LS_ARCHIVE);
+      if (savedArchive) archive = JSON.parse(savedArchive);
+      console.log('New day — starting fresh board');
+      return false;
+    }
+
+    // Load today's dogs
+    const savedDogs = localStorage.getItem(LS_DOGS);
+    if (savedDogs) {
+      dogs = JSON.parse(savedDogs);
+      console.log('Restored', dogs.length, 'dogs from localStorage');
+    }
+
+    // Load removed dogs
+    const savedRemoved = localStorage.getItem(LS_REMOVED);
+    if (savedRemoved) window.removedToday = JSON.parse(savedRemoved);
+
+    // Load archive
+    const savedArchive = localStorage.getItem(LS_ARCHIVE);
+    if (savedArchive) archive = JSON.parse(savedArchive);
+
+    return true;
+  } catch(e) {
+    console.warn('localStorage load failed:', e);
+    return false;
+  }
+}
+
+// Auto-save whenever board changes
+const _baseRenderBoard = window.renderBoard;
+window.renderBoard = function() {
+  _baseRenderBoard();
+  saveState();
+};
+
+// ════════════════════════════════════════
+// PERMANENT NOTE — separate from daily notes
+// Leads can promote a daily note to permanent via the flag flow,
+// OR add a standalone permanent note in the profile
+// Permanent notes are stored in P[name]._permanentNotes[]
+// Daily notes live only in d.notes[] and clear each day
+// ════════════════════════════════════════
+function addPermanentNote(dogName, text) {
+  if (!P[dogName]) return;
+  if (!P[dogName]._permanentNotes) P[dogName]._permanentNotes = [];
+  P[dogName]._permanentNotes.push({
+    date: new Date().toLocaleDateString('en-CA'),
+    text: text
+  });
+  saveProfiles();
+}
+
+// Hook into confirmPromoteFlag to also save a permanent note
+const _origConfirmPromote = window.confirmPromoteFlag;
+window.confirmPromoteFlag = function() {
+  _origConfirmPromote();
+  // After promote, save profiles to localStorage
+  saveProfiles();
+};
 
 // Override renderBoard to call patches after render
 const _origRenderBoard = window.renderBoard;
