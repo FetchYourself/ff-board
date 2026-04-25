@@ -1645,31 +1645,36 @@ async function loadFromSheets() {
 
     let loaded = 0, skipped = 0;
 
+    // Track name counts for duplicate detection
+    const nameCounts = {};
+    rows.forEach(function(row) {
+      const n = (row[col.name] || '').trim();
+      if (n) nameCounts[n] = (nameCounts[n] || 0) + 1;
+    });
+
     rows.forEach(function(row) {
       const name = (row[col.name] || '').trim();
       if (!name) return;
 
-      // Skip inactive colors (red/orange/yellow)
-      // Note: Sheet API doesn't return cell colors via values endpoint
-      // We use Legend + Warning columns to determine status instead
-      const legend = col.legend >= 0 ? (row[col.legend] || '') : '';
       const warning = col.warning >= 0 ? (row[col.warning] || '') : '';
-
-      // Skip dogs explicitly marked as inactive via warning text
       const inactiveKeywords = ['no more service', 'given the boot', 'removed', 'banned', 'last day'];
       const isInactive = inactiveKeywords.some(k => warning.toLowerCase().includes(k));
       if (isInactive) { skipped++; return; }
 
+      // For duplicate names, create unique key using name + owner first name
+      const ownerRaw = col.owner >= 0 ? (row[col.owner] || '').trim() : '';
+      const ownerFirst = ownerRaw.split(' ')[0] || '';
+      const profileKey = (nameCounts[name] > 1 && ownerFirst)
+        ? name + ' (' + ownerFirst + ')'
+        : name;
+
       // Build/update profile
-      const profile = P[name] || {};
+      const profile = P[profileKey] || {};
 
       // Only update fields that are empty in the hardcoded profile
       // (Sheet is source of truth, but don't wipe runtime changes)
-      if (col.owner >= 0 && row[col.owner]) {
-        // First name only — no last name in the app
-        const fullName = (row[col.owner] || '').trim();
-        profile.owner = fullName.split(' ')[0] || fullName;
-      }
+      // Owner first name only
+      if (ownerFirst) profile.owner = ownerFirst;
       if (!profile.email && col.email >= 0) profile.email = row[col.email] || profile.email;
       if (!profile.phone && col.phone >= 0) profile.phone = row[col.phone] || profile.phone;
       if (!profile.breed && col.breed >= 0) profile.breed = row[col.breed] || profile.breed;
@@ -1696,9 +1701,12 @@ async function loadFromSheets() {
         profile._sheetWarning = row[col.warning];
       }
 
+      // Add nickname from sheet if available
+      if (col.nickname >= 0 && row[col.nickname]) profile.nickname = row[col.nickname];
+
       // If this is a new dog not in hardcoded P, create full entry
-      if (!P[name]) {
-        P[name] = {
+      if (!P[profileKey]) {
+        P[profileKey] = {
           owner: profile.owner || '',
           email: profile.email || '',
           phone: profile.phone || '',
@@ -1720,7 +1728,7 @@ async function loadFromSheets() {
           _sheetWarning: profile._sheetWarning || null,
         };
       } else {
-        P[name] = profile;
+        P[profileKey] = profile;
       }
       loaded++;
     });
