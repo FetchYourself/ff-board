@@ -1137,6 +1137,10 @@ function renderArchive() {
 // ════════════════════════════════════════
 async function handlePhoto(event, type) {
   const file = event.target.files[0]; if(!file) return;
+  // If sheets haven't loaded yet, load them first so matching works
+  if (!sheetsLoaded) {
+    try { await loadFromSheets(); } catch(e) { /* continue anyway */ }
+  }
   const zoneId = {setmore:'zone-setmore',whiteboard:'zone-whiteboard',eod:'zone-eod'}[type];
   const zone = document.getElementById(zoneId);
   if (zone) { zone.classList.add('processing'); zone.innerHTML += '<div class="processing-bar"></div>'; }
@@ -1839,19 +1843,33 @@ function openReconModal(items, photoType) {
         ? '<span class="recon-badge recon-badge-new">❓ Not in system</span>'
         : '';
 
-    // Build dropdown options
-    const opts = allMatches.map(function(m) {
+    // Build dropdown options — always show ALL dogs as fallback
+    const allDogOptions = Object.keys(P).sort().map(function(key) {
+      const pr = P[key];
+      const display = (pr.nickname ? pr.nickname + ' — ' : '') + key +
+        (pr.breed ? ' (' + pr.breed : '') +
+        (pr.owner ? ' · ' + pr.owner : '') +
+        (pr.breed || pr.owner ? ')' : '');
+      return '<option value="' + key + '">' + display + '</option>';
+    }).join('');
+
+    const matchOpts = allMatches.map(function(m) {
       return '<option value="' + m.profileKey + '">' +
         (m.nickname ? m.nickname + ' — ' : '') +
-        m.displayName + ' (' + m.breed + ' · ' + m.owner + ')</option>';
+        m.displayName + ' (' + (m.breed||'') + ' · ' + (m.owner||'') + ')</option>';
     }).join('');
+
+    // Pre-select the first match if there's exactly one
+    const preselect = allMatches.length === 1 ? allMatches[0].profileKey : '';
 
     return '<div class="recon-item">' +
       '<div class="recon-item-header">AI read this name from the photo:</div>' +
       '<div class="recon-item-name">' + item.name + badgeHtml + '</div>' +
       (item.note ? '<div style="font-size:11px;color:var(--ff-muted);margin-top:3px;">' + item.note + '</div>' : '') +
       '<select class="recon-select" id="recon-select-' + idx + '">' +
-      (allMatches.length > 0 ? '<option value="">— Select the correct dog —</option>' + opts : '<option value="">No matches found</option>') +
+      '<option value="">— Select the correct dog —</option>' +
+      (allMatches.length > 0 ? '<optgroup label="Best matches">' + matchOpts + '</optgroup>' : '') +
+      '<optgroup label="All dogs">' + allDogOptions + '</optgroup>' +
       '<option value="__walkin__">➕ Add as new walk-in (' + item.name + ')</option>' +
       '<option value="__skip__">✕ Skip — do not add</option>' +
       '</select>' +
