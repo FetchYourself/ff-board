@@ -1692,7 +1692,32 @@ async function loadFromSheets() {
         profile._sheetWarning = row[col.warning];
       }
 
-      P[name] = profile;
+      // If this is a new dog not in hardcoded P, create full entry
+      if (!P[name]) {
+        P[name] = {
+          owner: profile.owner || '',
+          email: profile.email || '',
+          phone: profile.phone || '',
+          breed: profile.breed || '',
+          weight: profile.weight || null,
+          allergies: profile.allergies || null,
+          walkNotes: profile.walkNotes || null,
+          otherNotes: profile.otherNotes || null,
+          vaxExpiry: profile.vaxExpiry || null,
+          fixed: profile.fixed !== undefined ? profile.fixed : true,
+          flag: profile.flag || null,
+          groomed: profile.groomed || false,
+          nickname: profile.nickname || null,
+          _talkingPoint: profile._talkingPoint || null,
+          _attendantMsg: profile._attendantMsg || null,
+          _warnLevel: profile._warnLevel || null,
+          _cannotWith: profile._cannotWith || null,
+          _permanentNotes: profile._permanentNotes || [],
+          _sheetWarning: profile._sheetWarning || null,
+        };
+      } else {
+        P[name] = profile;
+      }
       loaded++;
     });
 
