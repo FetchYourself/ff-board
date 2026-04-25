@@ -1830,6 +1830,10 @@ function openReconModal(items, photoType) {
   reconQueue = items;
   reconPhotoType = photoType;
 
+  // Debug: log how many profiles we have
+  const profileCount = Object.keys(P).length;
+  console.log('Recon opening. P has', profileCount, 'profiles. sheetsLoaded:', sheetsLoaded);
+
   const body = document.getElementById('reconBody');
   body.innerHTML = items.map(function(item, idx) {
     const { exact, partial } = findMatches(item.name);
@@ -1867,11 +1871,11 @@ function openReconModal(items, photoType) {
       '<div class="recon-item-name">' + item.name + badgeHtml + '</div>' +
       (item.note ? '<div style="font-size:11px;color:var(--ff-muted);margin-top:3px;">' + item.note + '</div>' : '') +
       '<select class="recon-select" id="recon-select-' + idx + '">' +
-      '<option value="">— Select the correct dog —</option>' +
-      (allMatches.length > 0 ? '<optgroup label="Best matches">' + matchOpts + '</optgroup>' : '') +
-      '<optgroup label="All dogs">' + allDogOptions + '</optgroup>' +
-      '<option value="__walkin__">➕ Add as new walk-in (' + item.name + ')</option>' +
-      '<option value="__skip__">✕ Skip — do not add</option>' +
+      '<option value="">— Select the correct dog (' + Object.keys(P).length + ' loaded) —</option>' +
+      (allMatches.length > 0 ? '<option disabled>── Best matches ──</option>' + matchOpts : '') +
+      (Object.keys(P).length > 0 ? '<option disabled>── All dogs ──</option>' + allDogOptions : '') +
+      '<option value="__walkin__">+ Add as new walk-in (' + item.name + ')</option>' +
+      '<option value="__skip__">x Skip - do not add</option>' +
       '</select>' +
       '</div>';
   }).join('');
