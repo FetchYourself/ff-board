@@ -270,6 +270,22 @@
   .recon-badge { display:inline-flex; align-items:center; gap:4px; font-size:9px; font-weight:700; text-transform:uppercase; padding:2px 6px; border-radius:3px; margin-left:6px; }
   .recon-badge-dup { background:rgba(244,190,64,0.15); color:var(--ff-yellow); border:1px solid rgba(244,190,64,0.3); }
   .recon-badge-new { background:rgba(76,175,116,0.15); color:var(--ff-green); border:1px solid rgba(76,175,116,0.3); }
+
+  /* ── BIRTHDAY ── */
+  .bday-chip{display:inline-flex;align-items:center;gap:3px;background:rgba(255,105,180,0.15);border:1px solid rgba(255,105,180,0.4);border-radius:10px;padding:2px 7px;font-size:9px;font-weight:700;color:#ff69b4;margin-top:3px;}
+  .bday-chip.today{background:rgba(255,105,180,0.25);border-color:#ff69b4;animation:bday-pulse 1.5s ease-in-out infinite;}
+  .bday-avatar{background:linear-gradient(135deg,#ff69b4,#ffb347) !important;border-color:#ff69b4 !important;animation:bday-pulse 1.5s ease-in-out infinite;}
+  @keyframes bday-pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,105,180,0.4)}50%{transform:scale(1.08);box-shadow:0 0 0 6px rgba(255,105,180,0)}}
+
+  /* Confetti canvas */
+  #confettiCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9998;}
+
+  /* ── VAX SYRINGE ── */
+  .vax-syringe{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:rgba(224,82,82,0.15);border:1px solid rgba(224,82,82,0.4);cursor:pointer;font-size:12px;transition:all 0.15s;flex-shrink:0;}
+  .vax-syringe:hover{background:rgba(224,82,82,0.3);border-color:var(--ff-red);}
+  .vax-syringe.pulse{animation:vax-pulse 1s ease-in-out infinite;}
+  .vax-syringe.addressed{background:rgba(76,175,116,0.15);border-color:var(--ff-green);animation:none;cursor:default;}
+  @keyframes vax-pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,82,82,0.5);background:rgba(224,82,82,0.15)}50%{box-shadow:0 0 0 6px rgba(224,82,82,0);background:rgba(224,82,82,0.35)}}
   /* ── REMOVE DOG ── */
   .remove-btn{width:26px;height:26px;border-radius:5px;border:1px solid rgba(224,82,82,0.3);background:none;color:rgba(224,82,82,0.5);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;}
   .remove-btn:hover{border-color:var(--ff-red);color:var(--ff-red);background:var(--ff-red-dim);}
@@ -553,6 +569,28 @@
   </div>
 </div>
 
+
+<!-- VAX UPDATE MODAL -->
+<div class="modal-overlay" id="vaxUpdateModal" style="display:none;" onclick="if(event.target===this)closeVaxUpdateModal()">
+  <div class="modal" style="max-width:380px;">
+    <button class="modal-close" onclick="closeVaxUpdateModal()">✕</button>
+    <div class="modal-title">💉 Update Vaccination Date</div>
+    <div id="vaxUpdateDogName" style="font-size:13px;color:var(--ff-golden,#F4BE40);font-weight:700;margin-bottom:14px;"></div>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>New Vax Expiry Date</label>
+      <input type="date" id="vaxNewDate" style="font-size:14px;padding:10px 12px;">
+    </div>
+    <p style="font-size:11px;color:var(--ff-muted);margin-bottom:14px;">This will update the profile and clear the reminder. Please also update the Google Sheet.</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeVaxUpdateModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmVaxUpdate()">✅ Save New Date</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFETTI CANVAS -->
+<canvas id="confettiCanvas" style="display:none;"></canvas>
+
 <!-- REMOVE DOG MODAL -->
 <div class="modal-overlay" id="removeModal" style="display:none;" onclick="if(event.target===this)closeRemoveModal()">
   <div class="modal" style="max-width:420px;">
@@ -809,6 +847,22 @@ function card(d) {
   if (d.meals.d) mealBtns.push(`<button class="meal-btn ${d.meals_fed.d?'fed':''}" onclick="toggleMeal('${d.id}','d')">🌙D</button>`);
 
   const tags = [];
+
+  // Birthday check
+  const bdayStatus = getBirthdayStatus(p.bday || p.birthday);
+  if (bdayStatus) {
+    const bdayLabel = bdayStatus.type === 'today'
+      ? '🎂 Birthday Today!'
+      : '🎂 Bday in ' + bdayStatus.days + 'd (' + MONTH_NAMES[bdayStatus.month] + ' ' + bdayStatus.day + ')';
+    tags.push('<span class="bday-chip ' + (bdayStatus.type==='today'?'today':'') + '">' + bdayLabel + '</span>');
+  }
+
+  // Vax check
+  const vaxDays = p.vaxExpiry && !p._vaxAddressed
+    ? Math.ceil((new Date(p.vaxExpiry) - new Date()) / 86400000) : null;
+  const showVaxSyringe = vaxDays !== null && vaxDays <= 14;
+  const vaxPulse = vaxDays !== null && vaxDays <= 7;
+
   if (p.flag) tags.push(`<span class="tag tag-red">⚠️</span>`);
   if (!p.fixed) tags.push(`<span class="tag tag-yellow">Not Fixed</span>`);
   if (d.type==='trial') tags.push(`<span class="tag tag-orange">Trial</span>`);
@@ -831,7 +885,7 @@ function card(d) {
   <div class="dog-card ${p.flag?'has-flag':''} ${d.type==='trial'?'trial':''}" id="card-${d.id}">
     ${d.groom?`<div class="groom-dot" title="Groomed today ✂️"></div>`:''}
     <div class="card-header">
-      <div class="dog-avatar">${d.name[0]}</div>
+      <div class="dog-avatar ${bdayStatus && bdayStatus.type==='today' ? 'bday-avatar' : ''}">${bdayStatus && bdayStatus.type==='today' ? '🎂' : d.name[0]}</div>
       <div class="dog-info">
         <div class="dog-name">${d.name}</div>
         ${p.nickname?`<div style="font-size:11px;font-weight:700;color:var(--ff-golden,#F4BE40);margin-bottom:1px;">${p.nickname}</div>`:''}
@@ -851,6 +905,7 @@ function card(d) {
       <div class="walk-tracker"><span class="walk-label">Walks</span>${walkDots}</div>
       <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
         ${mealBtns.join('')}
+        ${showVaxSyringe ? `<div class="vax-syringe ${vaxPulse?'pulse':''}" onclick="openVaxSyringe('${d.name}')" title="Vax expires ${p.vaxExpiry} — click to update">💉</div>` : ''}
         <button class="icon-btn" onclick="openNoteModal('${d.id}')" title="Add note">📝</button>
         <button class="icon-btn" onclick="openDogModal('${d.id}')" title="Profile">👤</button>
         <button class="remove-btn" onclick="openRemoveModal('${d.id}')" title="Remove from today">✕</button>
@@ -1683,6 +1738,7 @@ async function loadFromSheets() {
       if (col.walkNotes >= 0 && row[col.walkNotes]) profile.walkNotes = row[col.walkNotes];
       if (col.otherNotes >= 0 && row[col.otherNotes]) profile.otherNotes = row[col.otherNotes];
       if (col.vaxExpiry >= 0 && row[col.vaxExpiry]) profile.vaxExpiry = row[col.vaxExpiry];
+      if (col.bday >= 0 && row[col.bday]) profile.bday = String(row[col.bday]);
       if (col.weight >= 0 && row[col.weight]) profile.weight = row[col.weight];
       if (col.fixed >= 0 && row[col.fixed]) profile.fixed = row[col.fixed].toLowerCase().includes('y');
       if (col.groom >= 0 && row[col.groom]) profile.groomed = row[col.groom].toLowerCase().includes('y');
@@ -1874,16 +1930,21 @@ function openReconModal(items, photoType) {
     // Pre-select the first match if there's exactly one
     const preselect = allMatches.length === 1 ? allMatches[0].profileKey : '';
 
-    return '<div class="recon-item">' +
-      '<div class="recon-item-header">AI read this name from the photo:</div>' +
-      '<div class="recon-item-name">' + item.name + badgeHtml + '</div>' +
-      (item.note ? '<div style="font-size:11px;color:var(--ff-muted);margin-top:3px;">' + item.note + '</div>' : '') +
+    return '<div class="recon-item" id="recon-item-' + idx + '">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">' +
+        '<div>' +
+          '<div class="recon-item-header">AI read this name from the photo:</div>' +
+          '<div class="recon-item-name">' + item.name + badgeHtml + '</div>' +
+          (item.note ? '<div style="font-size:11px;color:var(--ff-muted);margin-top:3px;">' + item.note + '</div>' : '') +
+        '</div>' +
+        '<button onclick="dismissReconItem(' + idx + ')" title="Not a dog — ignore this" class="remove-btn" ' +
+          'style="flex-shrink:0;margin-top:2px;font-size:10px;font-weight:700;width:auto;height:auto;padding:3px 8px;border-radius:5px;">✕ Not a dog</button>' +
+      '</div>' +
       '<select class="recon-select" id="recon-select-' + idx + '">' +
       '<option value="">— Select the correct dog (' + Object.keys(P).length + ' loaded) —</option>' +
       (allMatches.length > 0 ? '<option disabled>── Best matches ──</option>' + matchOpts : '') +
       (Object.keys(P).length > 0 ? '<option disabled>── All dogs ──</option>' + allDogOptions : '') +
       '<option value="__walkin__">+ Add as new walk-in (' + item.name + ')</option>' +
-      '<option value="__skip__">x Skip - do not add</option>' +
       '</select>' +
       '</div>';
   }).join('');
@@ -1894,6 +1955,20 @@ function openReconModal(items, photoType) {
 function closeReconModal() {
   document.getElementById('reconModal').style.display = 'none';
   reconQueue = [];
+}
+
+function dismissReconItem(idx) {
+  const item = document.getElementById('recon-item-' + idx);
+  if (item) {
+    item.style.opacity = '0.3';
+    item.style.pointerEvents = 'none';
+    // Mark the select as skip so confirmRecon ignores it
+    const sel = document.getElementById('recon-select-' + idx);
+    if (sel) sel.value = '__skip__';
+    // Add visual strikethrough
+    const nameEl = item.querySelector('.recon-item-name');
+    if (nameEl) nameEl.style.textDecoration = 'line-through';
+  }
 }
 
 function confirmRecon() {
@@ -2015,6 +2090,159 @@ const _origHandlePhotoResults = function(parsed, type, resultArea) {
 
 // Store reference so handlePhoto can call it
 window._handlePhotoResults = _origHandlePhotoResults;
+
+
+// ════════════════════════════════════════
+// BIRTHDAY HELPERS
+// ════════════════════════════════════════
+const MONTH_MAP = {
+  jan:0,feb:1,mar:2,apr:3,may:4,jun:5,
+  jul:6,aug:7,sep:8,oct:9,nov:10,dec:11,
+  january:0,february:1,march:2,april:3,june:5,
+  july:6,august:7,september:8,october:9,november:10,december:11
+};
+
+function parseBirthday(raw) {
+  if (!raw) return null;
+  const s = String(raw).trim();
+
+  // ISO datetime from sheets: 2023-01-21 00:00:00
+  const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) return { month: parseInt(isoMatch[2])-1, day: parseInt(isoMatch[3]) };
+
+  // Month name + day: "June 26th", "July 3rd 2020", "sept 16, 2024"
+  const textMatch = s.match(/([a-zA-Z]+)\.?\s+(\d{1,2})/);
+  if (textMatch) {
+    const m = MONTH_MAP[textMatch[1].toLowerCase().substring(0,3)];
+    if (m !== undefined) return { month: m, day: parseInt(textMatch[2]) };
+  }
+
+  // Day + month name: less common, skip
+  // Just month name: "April", "August" — no day, skip
+  return null;
+}
+
+function getBirthdayStatus(raw) {
+  const bday = parseBirthday(raw);
+  if (!bday) return null;
+  const today = new Date();
+  const thisYear = new Date(today.getFullYear(), bday.month, bday.day);
+  const diff = Math.round((thisYear - today) / 86400000);
+  // If already passed this year, check next year
+  const nextYear = new Date(today.getFullYear()+1, bday.month, bday.day);
+  const diffNext = Math.round((nextYear - today) / 86400000);
+  const daysUntil = diff >= 0 ? diff : diffNext;
+
+  if (daysUntil === 0) return { type:'today', days:0, month:bday.month, day:bday.day };
+  if (daysUntil <= 7) return { type:'soon', days:daysUntil, month:bday.month, day:bday.day };
+  return null;
+}
+
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ════════════════════════════════════════
+// CONFETTI
+// ════════════════════════════════════════
+function fireConfetti() {
+  const canvas = document.getElementById('confettiCanvas');
+  if (!canvas) return;
+  canvas.style.display = 'block';
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const pieces = Array.from({length:120}, function() {
+    return {
+      x: Math.random() * canvas.width,
+      y: -10 - Math.random() * 100,
+      w: 8 + Math.random()*8,
+      h: 5 + Math.random()*5,
+      r: Math.random()*Math.PI*2,
+      vx: (Math.random()-0.5)*4,
+      vy: 2 + Math.random()*4,
+      vr: (Math.random()-0.5)*0.2,
+      color: ['#F4BE40','#233F95','#ff69b4','#5cb85c','#e05252','#FFFAEF'][Math.floor(Math.random()*6)]
+    };
+  });
+
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pieces.forEach(function(p) {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.r);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+      p.x += p.vx; p.y += p.vy; p.r += p.vr; p.vy += 0.05;
+    });
+    frame++;
+    if (frame < 180) requestAnimationFrame(draw);
+    else { ctx.clearRect(0,0,canvas.width,canvas.height); canvas.style.display='none'; }
+  }
+  draw();
+}
+
+// ════════════════════════════════════════
+// VAX UPDATE
+// ════════════════════════════════════════
+let vaxUpdateTarget = null;
+
+function openVaxSyringe(dogName) {
+  const p = P[dogName];
+  if (!p) return;
+  vaxUpdateTarget = dogName;
+  document.getElementById('vaxUpdateDogName').textContent = '💉 ' + dogName + (p.owner ? ' — ' + p.owner : '');
+  // Pre-fill with current expiry if exists
+  const dateInput = document.getElementById('vaxNewDate');
+  if (p.vaxExpiry) {
+    // Try to parse to YYYY-MM-DD for the date input
+    try {
+      const d = new Date(p.vaxExpiry);
+      if (!isNaN(d)) dateInput.value = d.toISOString().split('T')[0];
+    } catch(e) { dateInput.value = ''; }
+  } else {
+    dateInput.value = '';
+  }
+  document.getElementById('vaxUpdateModal').style.display = 'flex';
+}
+
+function closeVaxUpdateModal() {
+  document.getElementById('vaxUpdateModal').style.display = 'none';
+  vaxUpdateTarget = null;
+}
+
+function confirmVaxUpdate() {
+  if (!vaxUpdateTarget) return;
+  const newDate = document.getElementById('vaxNewDate').value;
+  if (!newDate) { alert('Please enter a date.'); return; }
+
+  // Update profile
+  if (P[vaxUpdateTarget]) {
+    P[vaxUpdateTarget].vaxExpiry = newDate;
+    P[vaxUpdateTarget]._vaxAddressed = true;
+  }
+  saveProfiles();
+  closeVaxUpdateModal();
+  renderBoard();
+  renderVaxAlerts();
+}
+
+// ════════════════════════════════════════
+// BIRTHDAY CONFETTI ON LOAD
+// ════════════════════════════════════════
+function checkBirthdaysOnLoad() {
+  const hasBirthday = dogs.some(function(d) {
+    const p = P[d.name];
+    if (!p) return false;
+    const status = getBirthdayStatus(p.bday || p.birthday);
+    return status && status.type === 'today';
+  });
+  if (hasBirthday) {
+    setTimeout(fireConfetti, 800);
+  }
+}
 
 // ════════════════════════════════════════
 // LOCAL STORAGE — persist board state across sessions
@@ -2175,6 +2403,8 @@ window.renderBoard = function() {
 
 // Initial call with patches
 renderBoard();
+checkBirthdaysOnLoad();
+setTimeout(loadFromSheets, 500);
 
 </script>
 
@@ -2193,6 +2423,28 @@ renderBoard();
     </div>
   </div>
 </div>
+
+
+<!-- VAX UPDATE MODAL -->
+<div class="modal-overlay" id="vaxUpdateModal" style="display:none;" onclick="if(event.target===this)closeVaxUpdateModal()">
+  <div class="modal" style="max-width:380px;">
+    <button class="modal-close" onclick="closeVaxUpdateModal()">✕</button>
+    <div class="modal-title">💉 Update Vaccination Date</div>
+    <div id="vaxUpdateDogName" style="font-size:13px;color:var(--ff-golden,#F4BE40);font-weight:700;margin-bottom:14px;"></div>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>New Vax Expiry Date</label>
+      <input type="date" id="vaxNewDate" style="font-size:14px;padding:10px 12px;">
+    </div>
+    <p style="font-size:11px;color:var(--ff-muted);margin-bottom:14px;">This will update the profile and clear the reminder. Please also update the Google Sheet.</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeVaxUpdateModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmVaxUpdate()">✅ Save New Date</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFETTI CANVAS -->
+<canvas id="confettiCanvas" style="display:none;"></canvas>
 
 <!-- REMOVE DOG MODAL -->
 <div class="modal-overlay" id="removeModal" style="display:none;" onclick="if(event.target===this)closeRemoveModal()">
