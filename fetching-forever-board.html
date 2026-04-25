@@ -418,7 +418,15 @@
     <div class="panel">
       <div class="panel-title">➕ Add Dog to Today</div>
       <div class="form-row">
-        <div class="form-group"><label>Dog Name *</label><input type="text" id="add-name" placeholder="e.g. Suki" list="dogNameList"><datalist id="dogNameList"></datalist></div>
+        <div class="form-group"><label>Dog Name *</label>
+          <select id="add-name" onchange="handleAddNameChange()" style="background:var(--ff-dark);border:1px solid var(--ff-border);border-radius:6px;padding:7px 10px;color:var(--ff-text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;width:100%;">
+            <option value="">— Select or search a dog —</option>
+          </select>
+        </div>
+        <div class="form-group" id="new-name-row" style="display:none;grid-column:1/-1">
+          <label>New Dog Name</label>
+          <input type="text" id="add-name-text" placeholder="Enter dog name...">
+        </div>
         <div class="form-group"><label>Day Type</label><select id="add-type"><option value="full">Full Day</option><option value="half">Half Day</option><option value="trial">Trial</option></select></div>
         <div class="form-group"><label>Pen</label><select id="add-pen"><option value="">—</option><option value="1st">1st Pen</option><option value="2nd">2nd Pen</option><option value="3rd">3rd Pen</option></select></div>
         <div class="form-group"><label>Groom Today?</label><select id="add-groom"><option value="0">No</option><option value="1">Yes ✂️</option></select></div>
@@ -883,8 +891,20 @@ function renderVaxAlerts() {
 }
 
 function populateDl() {
-  const dl = document.getElementById('dogNameList');
-  if (dl) dl.innerHTML = Object.keys(P).map(n=>`<option value="${n}">`).join('');
+  const sel = document.getElementById('add-name');
+  if (!sel || sel.tagName !== 'SELECT') return;
+  const current = sel.value;
+  // Build sorted list with nickname display
+  const entries = Object.keys(P).sort().map(function(name) {
+    const p = P[name];
+    const display = p.nickname
+      ? p.nickname + ' (' + name + ' · ' + (p.breed||'') + ' · ' + (p.owner||'') + ')'
+      : name + (p.breed ? ' · ' + p.breed : '') + (p.owner ? ' · ' + p.owner : '');
+    return '<option value="' + name + '">' + display + '</option>';
+  }).join('');
+  sel.innerHTML = '<option value="">— Select a dog —</option>' + entries +
+    '<option value="__new__">➕ New / Walk-in (type name below)</option>';
+  if (current) sel.value = current;
 }
 
 // ════════════════════════════════════════
@@ -914,9 +934,25 @@ function toggleWallMode() {
   showSection('board');
 }
 
+// New walk-in name field (shown when __new__ selected)
+function handleAddNameChange() {
+  const sel = document.getElementById('add-name');
+  const newNameRow = document.getElementById('new-name-row');
+  if (sel && newNameRow) {
+    newNameRow.style.display = sel.value === '__new__' ? 'flex' : 'none';
+  }
+}
+
 function addDogToday() {
-  const name = document.getElementById('add-name').value.trim();
-  if (!name) { alert('Dog name required.'); return; }
+  const sel = document.getElementById('add-name');
+  let name = '';
+  if (sel.value === '__new__') {
+    name = (document.getElementById('add-name-text')?.value || '').trim();
+    if (!name) { alert('Please enter a name for the new dog.'); return; }
+  } else {
+    name = sel.value.trim();
+  }
+  if (!name) { alert('Please select a dog.'); return; }
   const type = document.getElementById('add-type').value;
   const pen = document.getElementById('add-pen').value;
   const groom = document.getElementById('add-groom').value==='1';
@@ -924,8 +960,12 @@ function addDogToday() {
   const d = mk(name,'',type,pen,null,groom);
   if (note) d.notes.push({date:new Date().toLocaleString(),text:note});
   dogs.push(d);
-  document.getElementById('add-name').value='';
+  const addSel = document.getElementById('add-name');
+  if (addSel) addSel.value = '';
+  const addText = document.getElementById('add-name-text');
+  if (addText) addText.value = '';
   document.getElementById('add-notes').value='';
+  handleAddNameChange();
   showSection('board'); renderBoard();
 }
 
