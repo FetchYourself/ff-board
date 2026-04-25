@@ -258,6 +258,18 @@
   .pin-error{color:var(--ff-red);font-size:12px;font-weight:600;height:18px;text-align:center;}
 
 
+
+  /* ── PHOTO RECONCILIATION ── */
+  .recon-modal-body { display:flex; flex-direction:column; gap:8px; max-height:60vh; overflow-y:auto; }
+  .recon-item { background:var(--ff-card); border:1px solid var(--ff-border); border-radius:8px; padding:12px 14px; }
+  .recon-item-header { font-size:12px; color:var(--ff-muted); margin-bottom:8px; }
+  .recon-item-name { font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--ff-yellow); letter-spacing:1px; }
+  .recon-select { width:100%; background:var(--ff-dark); border:1px solid var(--ff-border); border-radius:6px; padding:7px 10px; color:var(--ff-text); font-family:'DM Sans',sans-serif; font-size:12px; outline:none; margin-top:6px; }
+  .recon-select:focus { border-color:var(--ff-golden,#F4BE40); }
+  .recon-select option { background:var(--ff-dark); }
+  .recon-badge { display:inline-flex; align-items:center; gap:4px; font-size:9px; font-weight:700; text-transform:uppercase; padding:2px 6px; border-radius:3px; margin-left:6px; }
+  .recon-badge-dup { background:rgba(244,190,64,0.15); color:var(--ff-yellow); border:1px solid rgba(244,190,64,0.3); }
+  .recon-badge-new { background:rgba(76,175,116,0.15); color:var(--ff-green); border:1px solid rgba(76,175,116,0.3); }
   /* ── REMOVE DOG ── */
   .remove-btn{width:26px;height:26px;border-radius:5px;border:1px solid rgba(224,82,82,0.3);background:none;color:rgba(224,82,82,0.5);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;}
   .remove-btn:hover{border-color:var(--ff-red);color:var(--ff-red);background:var(--ff-red-dim);}
@@ -517,6 +529,21 @@
 </div>
 
 
+
+
+<!-- PHOTO RECONCILIATION MODAL -->
+<div class="modal-overlay" id="reconModal" style="display:none;" onclick="if(event.target===this)closeReconModal()">
+  <div class="modal" style="max-width:500px;">
+    <button class="modal-close" onclick="closeReconModal()">✕</button>
+    <div class="modal-title">📸 Review Photo Results</div>
+    <p style="font-size:12px;color:var(--ff-muted);margin-bottom:14px;">Some dogs need clarification before being added to the board. Select the correct match or confirm as a new walk-in.</p>
+    <div class="recon-modal-body" id="reconBody"></div>
+    <div class="modal-actions" style="margin-top:14px;">
+      <button class="btn btn-secondary btn-sm" onclick="closeReconModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmRecon()">✅ Add to Board</button>
+    </div>
+  </div>
+</div>
 
 <!-- REMOVE DOG MODAL -->
 <div class="modal-overlay" id="removeModal" style="display:none;" onclick="if(event.target===this)closeRemoveModal()">
@@ -799,6 +826,7 @@ function card(d) {
       <div class="dog-avatar">${d.name[0]}</div>
       <div class="dog-info">
         <div class="dog-name">${d.name}</div>
+        ${p.nickname?`<div style="font-size:11px;font-weight:700;color:var(--ff-golden,#F4BE40);margin-bottom:1px;">${p.nickname}</div>`:''}
         <div class="dog-meta">${p.breed||'Unknown'}${p.weight?' · '+p.weight:''}${p.owner?' · '+p.owner:''}</div>
         ${tags.length?`<div class="tags">${tags.join('')}</div>`:''}
       </div>
@@ -1095,25 +1123,8 @@ async function handlePhoto(event, type) {
     const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
     if (zone) { zone.classList.remove('processing'); zone.classList.add('done'); }
 
-    if (type==='setmore'&&parsed.dogs) {
-      let added=0;
-      parsed.dogs.forEach(e => {
-        if (!dogs.find(d=>d.name.toLowerCase()===e.name.toLowerCase())) {
-          dogs.push(mk(e.name,e.time||'', (e.type||'').toLowerCase().includes('half')?'half':'full','',null,false));
-          added++;
-        }
-      });
-      if(resultArea) resultArea.innerHTML=`<div class="ai-result">✅ Found ${parsed.dogs.length} booking(s), added ${added} new.\n${parsed.dogs.map(d=>`• ${d.name} (${d.type||'Full Day'})`).join('\n')}</div>`;
-      showSection('board'); renderBoard();
-    } else if (type==='whiteboard'&&parsed.updates) {
-      let added=0,updated=0;
-      parsed.updates.forEach(e=>{
-        const ex=dogs.find(d=>d.name.toLowerCase()===e.name.toLowerCase());
-        if(ex){if(e.note) ex.notes.push({date:new Date().toLocaleString(),text:e.note});updated++;}
-        else{const nd=mk(e.name,e.time||'','full','',null,false);if(e.note) nd.notes.push({date:new Date().toLocaleString(),text:e.note});dogs.push(nd);added++;}
-      });
-      if(resultArea) resultArea.innerHTML=`<div class="ai-result">✅ Added ${added}, updated ${updated}.\n${parsed.updates.map(u=>`• ${u.name}${u.note?' — '+u.note:''}`).join('\n')}</div>`;
-      showSection('board'); renderBoard();
+    if ((type==='setmore'||type==='whiteboard') && (parsed.dogs||parsed.updates)) {
+      window._handlePhotoResults(parsed, type, resultArea);
     } else if (type==='eod'&&parsed.tallies) {
       parsed.tallies.forEach(t=>{
         const d=dogs.find(d=>d.name.toLowerCase()===t.name.toLowerCase());
@@ -1562,13 +1573,15 @@ async function loadFromSheets() {
     const rows = data.values.slice(1);
 
     // Map header names to indices — matches actual sheet column order:
-    // Dog Name | Owner | Email | Phone | Partner | Breed | Weight | M/F |
-    // Allergies | Walking Notes | App Notes | Dog Bday | First Day |
-    // Next Vax | Vax Link | How Found | Legacy | Cannot Be With |
-    // Permanent Flag | Warning Level | Warning Date/Reason
+    // A: Dog Name | B: Owner | C: Dogs Nick Name | D: Email | E: Phone |
+    // F: Partner | G: Breed | H: Weight | I: M/F | J: Allergies |
+    // K: Walking Notes | L: App Notes | M: Dog Bday | N: First Day |
+    // O: Next Vax | P: Vax Link | Q: How Found | R: Legacy |
+    // S: Cannot Be With | T: Permanent Flag | U: Warning Level | V: Warning Date
     const col = {
       name:      headers.findIndex(h => h.includes('dog name')),
       owner:     headers.findIndex(h => h.includes('owner') && !h.includes('email') && !h.includes('phone')),
+      nickname:  headers.findIndex(h => h.includes('nick')),
       email:     headers.findIndex(h => h.includes('email')),
       phone:     headers.findIndex(h => h.includes('phone')),
       partner:   headers.findIndex(h => h.includes('partner') || h.includes('pickup')),
@@ -1616,6 +1629,7 @@ async function loadFromSheets() {
       if (!profile.email && col.email >= 0) profile.email = row[col.email] || profile.email;
       if (!profile.phone && col.phone >= 0) profile.phone = row[col.phone] || profile.phone;
       if (!profile.breed && col.breed >= 0) profile.breed = row[col.breed] || profile.breed;
+      if (col.nickname >= 0 && row[col.nickname]) profile.nickname = row[col.nickname];
       if (col.allergies >= 0 && row[col.allergies]) profile.allergies = row[col.allergies];
       if (col.walkNotes >= 0 && row[col.walkNotes]) profile.walkNotes = row[col.walkNotes];
       if (col.otherNotes >= 0 && row[col.otherNotes]) profile.otherNotes = row[col.otherNotes];
@@ -1671,6 +1685,241 @@ async function loadFromSheets() {
 function triggerSheetsSync() {
   loadFromSheets();
 }
+
+
+// ════════════════════════════════════════
+// PHOTO RECONCILIATION
+// ════════════════════════════════════════
+
+// Build a lookup of all known names + nicknames from profiles
+function buildNameLookup() {
+  const lookup = []; // [{key, name, nickname, breed, owner, profileKey}]
+  Object.keys(P).forEach(function(profileKey) {
+    const p = P[profileKey];
+    // Add the canonical name
+    lookup.push({
+      key: profileKey.toLowerCase(),
+      displayName: profileKey,
+      nickname: p.nickname || '',
+      breed: p.breed || '',
+      owner: p.owner || '',
+      profileKey: profileKey
+    });
+    // Also add nickname as a lookup key if it exists
+    if (p.nickname) {
+      lookup.push({
+        key: p.nickname.toLowerCase(),
+        displayName: profileKey,
+        nickname: p.nickname,
+        breed: p.breed || '',
+        owner: p.owner || '',
+        profileKey: profileKey
+      });
+    }
+  });
+  return lookup;
+}
+
+// Find all profiles that match a given name (exact or fuzzy)
+function findMatches(name) {
+  const lookup = buildNameLookup();
+  const n = name.toLowerCase().trim();
+  const exact = [];
+  const partial = [];
+
+  lookup.forEach(function(entry) {
+    if (entry.key === n || entry.nickname.toLowerCase() === n) {
+      // Check if already added (avoid dupes from nickname double-entry)
+      if (!exact.find(e => e.profileKey === entry.profileKey)) {
+        exact.push(entry);
+      }
+    } else if (entry.key.includes(n) || n.includes(entry.key) ||
+               entry.displayName.toLowerCase().includes(n) ||
+               (entry.nickname && entry.nickname.toLowerCase().includes(n))) {
+      if (!partial.find(e => e.profileKey === entry.profileKey)) {
+        partial.push(entry);
+      }
+    }
+  });
+
+  return { exact, partial };
+}
+
+// Check if a name from the photo needs reconciliation
+function needsRecon(name) {
+  const { exact } = findMatches(name);
+  // Needs recon if: no match at all, OR multiple exact matches (duplicates)
+  if (exact.length === 0) return 'unknown';
+  if (exact.length > 1) return 'duplicate';
+  return 'clear'; // exactly one match, add directly
+}
+
+let reconQueue = []; // pending items from photo scan
+let reconPhotoType = '';
+
+function openReconModal(items, photoType) {
+  reconQueue = items;
+  reconPhotoType = photoType;
+
+  const body = document.getElementById('reconBody');
+  body.innerHTML = items.map(function(item, idx) {
+    const { exact, partial } = findMatches(item.name);
+    const allMatches = exact.length > 0 ? exact : partial;
+    const isDuplicate = exact.length > 1;
+    const isUnknown = exact.length === 0;
+
+    const badgeHtml = isDuplicate
+      ? '<span class="recon-badge recon-badge-dup">⚠️ Multiple matches</span>'
+      : isUnknown
+        ? '<span class="recon-badge recon-badge-new">❓ Not in system</span>'
+        : '';
+
+    // Build dropdown options
+    const opts = allMatches.map(function(m) {
+      return '<option value="' + m.profileKey + '">' +
+        (m.nickname ? m.nickname + ' — ' : '') +
+        m.displayName + ' (' + m.breed + ' · ' + m.owner + ')</option>';
+    }).join('');
+
+    return '<div class="recon-item">' +
+      '<div class="recon-item-header">AI read this name from the photo:</div>' +
+      '<div class="recon-item-name">' + item.name + badgeHtml + '</div>' +
+      (item.note ? '<div style="font-size:11px;color:var(--ff-muted);margin-top:3px;">' + item.note + '</div>' : '') +
+      '<select class="recon-select" id="recon-select-' + idx + '">' +
+      (allMatches.length > 0 ? '<option value="">— Select the correct dog —</option>' + opts : '<option value="">No matches found</option>') +
+      '<option value="__walkin__">➕ Add as new walk-in (' + item.name + ')</option>' +
+      '<option value="__skip__">✕ Skip — do not add</option>' +
+      '</select>' +
+      '</div>';
+  }).join('');
+
+  document.getElementById('reconModal').style.display = 'flex';
+}
+
+function closeReconModal() {
+  document.getElementById('reconModal').style.display = 'none';
+  reconQueue = [];
+}
+
+function confirmRecon() {
+  let added = 0;
+  reconQueue.forEach(function(item, idx) {
+    const sel = document.getElementById('recon-select-' + idx);
+    if (!sel) return;
+    const val = sel.value;
+    if (!val || val === '__skip__') return;
+
+    if (val === '__walkin__') {
+      // Add as unknown walk-in
+      const d = mk(item.name, item.time || '', item.isHalf ? 'half' : 'full', '', null, false);
+      if (item.note) d.notes.push({ date: new Date().toLocaleString(), text: item.note });
+      dogs.push(d);
+      added++;
+    } else {
+      // Add using matched profile key
+      if (!dogs.find(d => d.name.toLowerCase() === val.toLowerCase())) {
+        const d = mk(val, item.time || '', item.isHalf ? 'half' : 'full', '', null, false);
+        if (item.note) d.notes.push({ date: new Date().toLocaleString(), text: item.note });
+        dogs.push(d);
+        added++;
+      }
+    }
+  });
+
+  closeReconModal();
+  if (added > 0) renderBoard();
+}
+
+// ── Override handlePhoto to use reconciliation flow
+// Patch the existing photo result handler to route through recon when needed
+const _origHandlePhotoResults = function(parsed, type, resultArea) {
+  if (type === 'setmore' && parsed.dogs) {
+    const toAdd = [];    // add directly
+    const toRecon = [];  // need clarification
+
+    parsed.dogs.forEach(function(e) {
+      const name = e.name || '';
+      if (!name) return;
+      const isHalf = (e.type || '').toLowerCase().includes('half');
+
+      // Check if already on board
+      if (dogs.find(d => d.name.toLowerCase() === name.toLowerCase())) return;
+
+      const status = needsRecon(name);
+      if (status === 'clear') {
+        // Find the exact match and use the correct profile key
+        const { exact } = findMatches(name);
+        toAdd.push({ name: exact[0].profileKey, time: e.time, isHalf });
+      } else {
+        toRecon.push({ name, time: e.time, isHalf, note: e.type || '' });
+      }
+    });
+
+    // Add clear ones immediately
+    let added = 0;
+    toAdd.forEach(function(item) {
+      dogs.push(mk(item.name, item.time || '', item.isHalf ? 'half' : 'full', '', null, false));
+      added++;
+    });
+
+    if (resultArea) {
+      resultArea.innerHTML = '<div class="ai-result">Added ' + added + ' of ' + parsed.dogs.length + ' directly' + (toRecon.length > 0 ? ', ' + toRecon.length + ' need clarification' : '') + '</div>'
+    }
+
+    if (toRecon.length > 0) {
+      setTimeout(function() { openReconModal(toRecon, 'setmore'); }, 300);
+    } else {
+      showSection('board');
+    }
+    renderBoard();
+  }
+
+  else if (type === 'whiteboard' && parsed.updates) {
+    const toAdd = [];
+    const toRecon = [];
+
+    parsed.updates.forEach(function(e) {
+      const name = e.name || '';
+      if (!name) return;
+      const existing = dogs.find(d => d.name.toLowerCase() === name.toLowerCase());
+      if (existing) {
+        // Already on board — just update notes
+        if (e.note) existing.notes.push({ date: new Date().toLocaleString(), text: e.note });
+        return;
+      }
+      const status = needsRecon(name);
+      if (status === 'clear') {
+        const { exact } = findMatches(name);
+        toAdd.push({ name: exact[0].profileKey, time: e.time, note: e.note });
+      } else {
+        toRecon.push({ name, time: e.time, note: e.note });
+      }
+    });
+
+    let added = 0;
+    toAdd.forEach(function(item) {
+      const d = mk(item.name, item.time || '', 'full', '', null, false);
+      if (item.note) d.notes.push({ date: new Date().toLocaleString(), text: item.note });
+      dogs.push(d);
+      added++;
+    });
+
+    if (resultArea) {
+      resultArea.innerHTML = '<div class="ai-result">✅ Added ' + added + ' directly.' +
+        (toRecon.length > 0 ? ' ' + toRecon.length + ' need clarification.' : '') + '</div>';
+    }
+
+    if (toRecon.length > 0) {
+      setTimeout(function() { openReconModal(toRecon, 'whiteboard'); }, 300);
+    } else {
+      showSection('board');
+    }
+    renderBoard();
+  }
+};
+
+// Store reference so handlePhoto can call it
+window._handlePhotoResults = _origHandlePhotoResults;
 
 // ════════════════════════════════════════
 // LOCAL STORAGE — persist board state across sessions
@@ -1834,6 +2083,21 @@ renderBoard();
 
 </script>
 
+
+
+<!-- PHOTO RECONCILIATION MODAL -->
+<div class="modal-overlay" id="reconModal" style="display:none;" onclick="if(event.target===this)closeReconModal()">
+  <div class="modal" style="max-width:500px;">
+    <button class="modal-close" onclick="closeReconModal()">✕</button>
+    <div class="modal-title">📸 Review Photo Results</div>
+    <p style="font-size:12px;color:var(--ff-muted);margin-bottom:14px;">Some dogs need clarification before being added to the board. Select the correct match or confirm as a new walk-in.</p>
+    <div class="recon-modal-body" id="reconBody"></div>
+    <div class="modal-actions" style="margin-top:14px;">
+      <button class="btn btn-secondary btn-sm" onclick="closeReconModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmRecon()">✅ Add to Board</button>
+    </div>
+  </div>
+</div>
 
 <!-- REMOVE DOG MODAL -->
 <div class="modal-overlay" id="removeModal" style="display:none;" onclick="if(event.target===this)closeRemoveModal()">
