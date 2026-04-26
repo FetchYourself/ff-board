@@ -1117,7 +1117,21 @@ function openVaxEmail(id) {
   const d = dogs.find(d=>d.id===id); if(!d)return;
   const p = P[d.name]; if(!p)return;
   const days = p.vaxExpiry ? Math.ceil((new Date(p.vaxExpiry)-new Date())/864e5) : '?';
-  const body = `Hi ${(p.owner||'').split(' ')[0]||'there'},\n\nHope you and ${d.name} are doing great! 🐾\n\nJust a friendly reminder that ${d.name}'s vaccinations are due to expire on ${p.vaxExpiry} — that's coming up in about ${days} day${days!==1?'s':''}.\n\nAll dogs at Fetching Forever must be current on Bordetella, rabies, and distemper/parvovirus. Once updated, just send proof from your vet and we'll keep it on file!\n\nWoof,\nThe Fetching Forever Team\n📍 3080 Cambie St, Vancouver BC\n📞 1 (604) 977-3647`;
+  const firstName = (p.owner||'').split(' ')[0] || 'there';
+  const daysStr = days + ' day' + (days !== 1 ? 's' : '');
+  const bodyLines = [
+    'Hi ' + firstName + ',',
+    '',
+    'Just a friendly reminder from your local Dog Daycare and Spa that ' + d.name + '\u2019s vaccinations are due to expire on ' + (p.vaxExpiry||'soon') + ' \u2014 that\u2019s coming up in about ' + daysStr + '.',
+    '',
+    'We\u2019ve gotta keep all the pups at Fetching Forever current on Bordetella, rabies, and distemper/parvovirus. Once updated, or if it is already, please send proof from your vet so we can update our files!',
+    '',
+    'Catch ya later!',
+    'The Fetching Forever Team',
+    '\u2794 3080 Cambie St, Vancouver BC',
+    '\u260e\ufe0f 1 (604) 977-3647'
+  ];
+  const body = bodyLines.join('\n');
   emailDog = { email:p.email, subject:`Vaccination Reminder for ${d.name} 💉`, body };
   document.getElementById('emailPreview').textContent = `To: ${p.email||'[owner email]'}\nSubject: Vaccination Reminder for ${d.name} 💉\n\n${body}`;
   document.getElementById('emailModal').style.display='flex';
