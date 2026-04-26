@@ -1931,15 +1931,14 @@ function openReconModal(items, photoType) {
     const preselect = allMatches.length === 1 ? allMatches[0].profileKey : '';
 
     return '<div class="recon-item" id="recon-item-' + idx + '">' +
-      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">' +
-        '<div>' +
-          '<div class="recon-item-header">AI read this name from the photo:</div>' +
-          '<div class="recon-item-name">' + item.name + badgeHtml + '</div>' +
-          (item.note ? '<div style="font-size:11px;color:var(--ff-muted);margin-top:3px;">' + item.note + '</div>' : '') +
-        '</div>' +
-        '<button onclick="dismissReconItem(' + idx + ')" title="Not a dog — ignore this" class="remove-btn" ' +
-          'style="flex-shrink:0;margin-top:2px;font-size:10px;font-weight:700;width:auto;height:auto;padding:3px 8px;border-radius:5px;">✕ Not a dog</button>' +
+      '<div class="recon-item-header">AI read this name from the photo:</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+        '<div class="recon-item-name" style="flex:1;">' + item.name + badgeHtml + '</div>' +
+        '<button onclick="dismissReconItem(' + idx + ')" ' +
+          'style="background:rgba(224,82,82,0.1);border:1px solid rgba(224,82,82,0.35);color:#e05252;' +
+          'border-radius:5px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">&#x2715; Not a dog</button>' +
       '</div>' +
+      (item.note ? '<div style="font-size:11px;color:#888;margin-bottom:6px;">' + item.note + '</div>' : '') +
       '<select class="recon-select" id="recon-select-' + idx + '">' +
       '<option value="">— Select the correct dog (' + Object.keys(P).length + ' loaded) —</option>' +
       (allMatches.length > 0 ? '<option disabled>── Best matches ──</option>' + matchOpts : '') +
