@@ -286,6 +286,37 @@
   .vax-syringe.pulse{animation:vax-pulse 1s ease-in-out infinite;}
   .vax-syringe.addressed{background:rgba(76,175,116,0.15);border-color:var(--ff-green);animation:none;cursor:default;}
   @keyframes vax-pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,82,82,0.5);background:rgba(224,82,82,0.15)}50%{box-shadow:0 0 0 6px rgba(224,82,82,0);background:rgba(224,82,82,0.35)}}
+
+  /* ── FIRST AID / VET POPUP ── */
+  .firstaid-btn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(224,82,82,0.15);border:1px solid rgba(224,82,82,0.35);cursor:pointer;font-size:10px;flex-shrink:0;transition:all 0.15s;margin-left:4px;vertical-align:middle;}
+  .firstaid-btn:hover{background:rgba(224,82,82,0.3);border-color:var(--ff-red);}
+  .vet-info-row{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
+  .vet-info-row:last-child{border-bottom:none;}
+  .vet-info-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--ff-muted);min-width:70px;flex-shrink:0;margin-top:1px;}
+  .vet-info-value{font-size:12px;color:var(--ff-text);flex:1;}
+
+  /* ── INCIDENT REPORT ── */
+  .incident-btn{width:26px;height:26px;border-radius:5px;border:1px solid rgba(224,82,82,0.25);background:none;color:rgba(224,82,82,0.5);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;}
+  .incident-btn:hover{border-color:var(--ff-red);color:var(--ff-red);background:var(--ff-red-dim);}
+  .incident-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;}
+  .incident-type-btn{padding:8px 10px;border-radius:6px;border:1px solid var(--ff-border);background:none;color:var(--ff-text);font-size:11px;font-weight:600;cursor:pointer;text-align:left;transition:all 0.15s;}
+  .incident-type-btn:hover{border-color:var(--ff-red);background:var(--ff-red-dim);color:var(--ff-red);}
+  .incident-type-btn.selected{border-color:var(--ff-red);background:var(--ff-red-dim);color:var(--ff-red);}
+  .severity-row{display:flex;gap:8px;margin-bottom:12px;}
+  .severity-btn{flex:1;padding:7px;border-radius:6px;border:1px solid var(--ff-border);background:none;font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:all 0.15s;}
+  .severity-btn:hover{opacity:0.8;}
+  .severity-btn.sel-minor{background:rgba(76,175,116,0.2);border-color:var(--ff-green);color:var(--ff-green);}
+  .severity-btn.sel-moderate{background:rgba(230,184,74,0.2);border-color:var(--ff-yellow);color:var(--ff-yellow);}
+  .severity-btn.sel-serious{background:var(--ff-red-dim);border-color:var(--ff-red);color:var(--ff-red);}
+  .incident-log{max-height:200px;overflow-y:auto;}
+  .incident-item{padding:8px 10px;background:var(--ff-card);border-radius:6px;margin-bottom:6px;border-left:3px solid var(--ff-red);}
+  .incident-meta{font-size:9px;color:var(--ff-muted);margin-bottom:3px;display:flex;gap:8px;}
+  .incident-text{font-size:11px;}
+
+  /* ── CHURN / OUTREACH BANNER ── */
+  .outreach-bar{background:rgba(91,155,213,0.08);border:1px solid rgba(91,155,213,0.25);border-radius:8px;padding:9px 12px;margin-bottom:12px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;}
+  .outreach-chip{background:rgba(91,155,213,0.12);border:1px solid rgba(91,155,213,0.3);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--ff-blue);display:flex;align-items:center;gap:5px;}
+  .outreach-chip button{background:var(--ff-blue);color:white;border:none;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:700;cursor:pointer;}
   /* ── REMOVE DOG ── */
   .remove-btn{width:26px;height:26px;border-radius:5px;border:1px solid rgba(224,82,82,0.3);background:none;color:rgba(224,82,82,0.5);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;}
   .remove-btn:hover{border-color:var(--ff-red);color:var(--ff-red);background:var(--ff-red-dim);}
@@ -394,6 +425,7 @@
   <!-- BOARD -->
   <div class="section active" id="section-board">
     <div id="vaxAlerts"></div>
+    <div class="outreach-bar" id="outreachBar" style="display:none;"></div>
     <div class="search-bar">
       <input class="search-input" type="text" placeholder="Search dog or owner..." id="searchInput" oninput="renderBoard()">
       <div class="filter-tabs">
@@ -590,6 +622,102 @@
 
 <!-- CONFETTI CANVAS -->
 <canvas id="confettiCanvas" style="display:none;"></canvas>
+
+
+<!-- VET / FIRST AID MODAL -->
+<div class="modal-overlay" id="vetModal" style="display:none;" onclick="if(event.target===this)closeVetModal()">
+  <div class="modal" style="max-width:420px;">
+    <button class="modal-close" onclick="closeVetModal()">✕</button>
+    <div class="modal-title">🏥 Health & Emergency Info</div>
+    <div id="vetModalBody"></div>
+  </div>
+</div>
+
+<!-- INCIDENT REPORT MODAL -->
+<div class="modal-overlay" id="incidentModal" style="display:none;" onclick="if(event.target===this)closeIncidentModal()">
+  <div class="modal" style="max-width:540px;">
+    <button class="modal-close" onclick="closeIncidentModal()">✕</button>
+    <div class="modal-title">📋 Incident Report</div>
+    <div id="incidentDogInfo" style="font-size:13px;color:#F4BE40;font-weight:700;margin-bottom:14px;"></div>
+
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ff-muted);margin-bottom:7px;">Incident Type</div>
+    <div class="incident-type-grid">
+      <button class="incident-type-btn" onclick="selectIncidentType('Dog-dog altercation',this)">🐕 Dog-Dog Altercation</button>
+      <button class="incident-type-btn" onclick="selectIncidentType('Dog-human bite or scratch',this)">🤚 Dog-Human Bite/Scratch</button>
+      <button class="incident-type-btn" onclick="selectIncidentType('Injury — dog',this)">🩹 Injury (Dog)</button>
+      <button class="incident-type-btn" onclick="selectIncidentType('Injury — staff',this)">🩹 Injury (Staff)</button>
+      <button class="incident-type-btn" onclick="selectIncidentType('Illness or vomiting',this)">🤒 Illness / Vomiting</button>
+      <button class="incident-type-btn" onclick="selectIncidentType('Property damage',this)">🏚️ Property Damage</button>
+      <button class="incident-type-btn" onclick="selectIncidentType('Escape or flight risk',this)">🚨 Escape / Flight Risk</button>
+      <button class="incident-type-btn" onclick="selectIncidentType('Other',this)">📋 Other</button>
+    </div>
+
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ff-muted);margin-bottom:7px;">Severity</div>
+    <div class="severity-row">
+      <button class="severity-btn" id="sev-minor" onclick="selectSeverity('Minor',this)">🟢 Minor</button>
+      <button class="severity-btn" id="sev-moderate" onclick="selectSeverity('Moderate',this)">🟡 Moderate</button>
+      <button class="severity-btn" id="sev-serious" onclick="selectSeverity('Serious',this)">🔴 Serious</button>
+    </div>
+
+    <div class="form-row" style="margin-bottom:10px;">
+      <div class="form-group">
+        <label>Staff Member Present</label>
+        <select id="incident-staff">
+          <option value="">— Select staff —</option>
+          <option>Jay</option>
+          <option>Sarah</option>
+          <option>Eliza</option>
+          <option>Adam</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Time of Incident</label>
+        <input type="time" id="incident-time">
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>Description</label>
+      <textarea id="incident-desc" placeholder="Describe exactly what happened..." style="min-height:80px;"></textarea>
+    </div>
+
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>Action Taken</label>
+      <textarea id="incident-action" placeholder="What was done in response..." style="min-height:60px;"></textarea>
+    </div>
+
+    <div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
+        <input type="checkbox" id="incident-vet" style="accent-color:var(--ff-red);width:14px;height:14px;">
+        Vet was contacted
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
+        <input type="checkbox" id="incident-owner" style="accent-color:var(--ff-red);width:14px;height:14px;">
+        Owner was notified
+      </label>
+    </div>
+
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>Staff Signature (type full name to confirm)</label>
+      <input type="text" id="incident-sig" placeholder="Type your full name...">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeIncidentModal()">Cancel</button>
+      <button class="btn btn-sm" style="background:var(--ff-red);color:white;" onclick="submitIncidentReport()">📋 File Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- INCIDENT VIEW MODAL -->
+<div class="modal-overlay" id="incidentViewModal" style="display:none;" onclick="if(event.target===this)document.getElementById('incidentViewModal').style.display='none'">
+  <div class="modal" style="max-width:500px;">
+    <button class="modal-close" onclick="document.getElementById('incidentViewModal').style.display='none'">✕</button>
+    <div class="modal-title">📋 Incident History</div>
+    <div id="incidentViewBody"></div>
+  </div>
+</div>
 
 <!-- REMOVE DOG MODAL -->
 <div class="modal-overlay" id="removeModal" style="display:none;" onclick="if(event.target===this)closeRemoveModal()">
@@ -889,7 +1017,7 @@ function card(d) {
       <div class="dog-info">
         <div class="dog-name">${d.name}</div>
         ${p.nickname?`<div style="font-size:11px;font-weight:700;color:var(--ff-golden,#F4BE40);margin-bottom:1px;">${p.nickname}</div>`:''}
-        <div class="dog-meta">${p.breed||'Unknown'}${p.weight?' · '+p.weight:''}${p.owner?' · '+p.owner:''}</div>
+        <div style="display:flex;align-items:center;gap:5px;"><div class="dog-meta">${p.breed||'Unknown'}${p.weight?' · '+p.weight:''}${p.owner?' · '+p.owner:''}</div><span class="firstaid-btn" onclick="openVetModal('${d.name}')" title="Health &amp; Emergency Info">✚</span></div>
         ${tags.length?`<div class="tags">${tags.join('')}</div>`:''}
       </div>
     </div>
@@ -908,6 +1036,7 @@ function card(d) {
         ${showVaxSyringe ? `<div class="vax-syringe ${vaxPulse?'pulse':''}" onclick="openVaxSyringe('${d.name}')" title="Vax expires ${p.vaxExpiry} — click to update">💉</div>` : ''}
         <button class="icon-btn" onclick="openNoteModal('${d.id}')" title="Add note">📝</button>
         <button class="icon-btn" onclick="openDogModal('${d.id}')" title="Profile">👤</button>
+        <button class="incident-btn" onclick="openIncidentModal('${d.id}')" title="File incident report">📋</button>
         <button class="remove-btn" onclick="openRemoveModal('${d.id}')" title="Remove from today">✕</button>
       </div>
     </div>
@@ -1163,6 +1292,8 @@ function archiveDay() {
   if (!dogs.length) { alert('No dogs to archive.'); return; }
   if (!confirm('Archive today and reset the board for tomorrow?')) return;
   const removedLog = window.removedToday || [];
+  // Update last visit for all dogs being archived
+  dogs.forEach(function(d) { updateLastVisit(d.name); });
   archive.unshift({
     date: new Date().toLocaleDateString('en-CA'),
     removed: removedLog,
@@ -1565,6 +1696,9 @@ function postRenderPatches() {
       val.appendChild(tip);
     });
   });
+
+  // 3b. Outreach banner
+  renderOutreachBanner();
 
   // 4. Wiggles chip — inject into card header if dog has a balance
   dogs.forEach(function(d) {
@@ -2257,6 +2391,238 @@ function checkBirthdaysOnLoad() {
   }
 }
 
+
+// ════════════════════════════════════════
+// FIRST AID / VET POPUP
+// ════════════════════════════════════════
+function openVetModal(dogName) {
+  const p = P[dogName] || {};
+  const allergies = p.allergies && p.allergies.toLowerCase() !== 'no' && p.allergies.toLowerCase() !== 'nope' ? p.allergies : null;
+
+  document.getElementById('vetModalBody').innerHTML = [
+    '<div class="vet-info-row"><div class="vet-info-label">🏥 Vet Clinic</div><div class="vet-info-value">' + (p.vetClinic || 'King Edward Vet — 604-872-3375') + '</div></div>',
+    '<div class="vet-info-row"><div class="vet-info-label">📞 Emergency</div><div class="vet-info-value">' + (p.phone ? '<a href="tel:' + p.phone + '" style="color:var(--ff-golden)">' + p.phone + '</a>' : '—') + '</div></div>',
+    '<div class="vet-info-row"><div class="vet-info-label">👤 Owner</div><div class="vet-info-value">' + (p.owner || '—') + (p.email ? '<br><span style="font-size:10px;color:var(--ff-muted);">' + p.email + '</span>' : '') + '</div></div>',
+    allergies ? '<div class="vet-info-row" style="background:var(--ff-red-dim);border-radius:6px;padding:8px 10px;margin-top:6px;"><div class="vet-info-label" style="color:var(--ff-red);">🚫 Allergies</div><div class="vet-info-value" style="color:var(--ff-red);font-weight:700;">' + allergies + '</div></div>' : '',
+    p.otherNotes ? '<div class="vet-info-row"><div class="vet-info-label">📌 Health Notes</div><div class="vet-info-value">' + p.otherNotes + '</div></div>' : '',
+    p.fixed === false ? '<div class="vet-info-row"><div class="vet-info-label">⚠️ Intact</div><div class="vet-info-value" style="color:var(--ff-yellow);">Not spayed/neutered</div></div>' : '',
+    p.vaxExpiry ? '<div class="vet-info-row"><div class="vet-info-label">💉 Vax Expiry</div><div class="vet-info-value">' + p.vaxExpiry + '</div></div>' : '',
+  ].filter(Boolean).join('');
+
+  document.getElementById('vetModal').style.display = 'flex';
+}
+
+function closeVetModal() {
+  document.getElementById('vetModal').style.display = 'none';
+}
+
+// ════════════════════════════════════════
+// INCIDENT REPORTS
+// ════════════════════════════════════════
+let incidentTarget = null;
+let selectedIncidentType = null;
+let selectedSeverity = null;
+let allIncidents = []; // global incident log
+
+function openIncidentModal(dogId) {
+  incidentTarget = dogId;
+  selectedIncidentType = null;
+  selectedSeverity = null;
+  const d = dogs.find(d => d.id === dogId);
+  if (!d) return;
+  document.getElementById('incidentDogInfo').textContent = '🐾 ' + d.name + (P[d.name]?.owner ? ' — ' + P[d.name].owner : '');
+
+  // Reset form
+  document.querySelectorAll('.incident-type-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.severity-btn').forEach(b => {
+    b.classList.remove('sel-minor','sel-moderate','sel-serious');
+  });
+  document.getElementById('incident-staff').value = '';
+  document.getElementById('incident-time').value = new Date().toTimeString().slice(0,5);
+  document.getElementById('incident-desc').value = '';
+  document.getElementById('incident-action').value = '';
+  document.getElementById('incident-vet').checked = false;
+  document.getElementById('incident-owner').checked = false;
+  document.getElementById('incident-sig').value = '';
+  document.getElementById('incidentModal').style.display = 'flex';
+}
+
+function closeIncidentModal() {
+  document.getElementById('incidentModal').style.display = 'none';
+  incidentTarget = null;
+}
+
+function selectIncidentType(type, btn) {
+  selectedIncidentType = type;
+  document.querySelectorAll('.incident-type-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function selectSeverity(level, btn) {
+  selectedSeverity = level;
+  document.querySelectorAll('.severity-btn').forEach(b => b.classList.remove('sel-minor','sel-moderate','sel-serious'));
+  btn.classList.add('sel-' + level.toLowerCase());
+}
+
+function submitIncidentReport() {
+  if (!selectedIncidentType) { alert('Please select an incident type.'); return; }
+  if (!selectedSeverity) { alert('Please select a severity level.'); return; }
+  const sig = document.getElementById('incident-sig').value.trim();
+  if (!sig) { alert('Please type your full name to sign the report.'); return; }
+  const desc = document.getElementById('incident-desc').value.trim();
+  if (!desc) { alert('Please describe what happened.'); return; }
+
+  const d = dogs.find(d => d.id === incidentTarget);
+  if (!d) return;
+  const p = P[d.name] || {};
+
+  const report = {
+    id: Date.now(),
+    dogName: d.name,
+    dogOwner: p.owner || '',
+    ownerEmail: p.email || '',
+    ownerPhone: p.phone || '',
+    type: selectedIncidentType,
+    severity: selectedSeverity,
+    staff: document.getElementById('incident-staff').value,
+    time: document.getElementById('incident-time').value,
+    date: new Date().toLocaleDateString('en-CA'),
+    desc: desc,
+    action: document.getElementById('incident-action').value.trim(),
+    vetContacted: document.getElementById('incident-vet').checked,
+    ownerNotified: document.getElementById('incident-owner').checked,
+    signature: sig
+  };
+
+  // Save to global log and dog profile
+  allIncidents.unshift(report);
+  if (!P[d.name]) P[d.name] = {};
+  if (!P[d.name]._incidents) P[d.name]._incidents = [];
+  P[d.name]._incidents.unshift(report);
+  saveProfiles();
+
+  // Also add as a permanent note on the dog
+  if (!P[d.name]._permanentNotes) P[d.name]._permanentNotes = [];
+  P[d.name]._permanentNotes.unshift({
+    date: report.date + ' ' + report.time,
+    text: '[INCIDENT ' + report.severity.toUpperCase() + '] ' + report.type + ': ' + report.desc.substring(0,100) + (report.desc.length > 100 ? '...' : ''),
+    isIncident: true,
+    staff: sig
+  });
+
+  // If owner not notified and serious, offer email draft
+  if (!report.ownerNotified && report.severity === 'Serious') {
+    const bodyParts = [
+      'Hi ' + (p.owner || 'there') + ',',
+      '',
+      'We wanted to reach out regarding an incident that occurred today involving ' + d.name + '.',
+      '',
+      'Incident type: ' + report.type,
+      'Time: ' + report.time,
+      'Severity: ' + report.severity,
+      '',
+      report.desc,
+      '',
+      'Action taken: ' + (report.action || 'See staff notes'),
+      '',
+      'Please give us a call at 1 (604) 977-3647 so we can discuss further.',
+      '',
+      'The Fetching Forever Team',
+      '3080 Cambie St, Vancouver BC'
+    ];
+    const body = bodyParts.join('\n');
+    emailDog = { email: p.email, subject: 'Incident Report — ' + d.name + ' — ' + report.date, body: body };
+    document.getElementById('emailPreview').textContent = ['To: ' + (p.email || '[owner email]'), 'Subject: Incident Report — ' + d.name + ' — ' + report.date, '', body].join('\n');
+    closeIncidentModal();
+    document.getElementById('emailModal').style.display = 'flex';
+  } else {
+    closeIncidentModal();
+  }
+
+  renderBoard();
+  alert('✅ Incident report filed and signed by ' + sig + '.');
+}
+
+function viewIncidents(dogName) {
+  const p = P[dogName] || {};
+  const incidents = p._incidents || [];
+  const body = document.getElementById('incidentViewBody');
+  if (!incidents.length) {
+    body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--ff-muted);">No incidents on record for ' + dogName + '.</div>';
+  } else {
+    body.innerHTML = '<div class="incident-log">' + incidents.map(function(r) {
+      const sevColor = r.severity === 'Serious' ? 'var(--ff-red)' : r.severity === 'Moderate' ? 'var(--ff-yellow)' : 'var(--ff-green)';
+      return '<div class="incident-item">' +
+        '<div class="incident-meta">' +
+          '<span>' + r.date + ' ' + r.time + '</span>' +
+          '<span style="color:' + sevColor + ';font-weight:700;">' + r.severity + '</span>' +
+          '<span>' + r.type + '</span>' +
+          '<span>Staff: ' + (r.staff || r.signature) + '</span>' +
+        '</div>' +
+        '<div class="incident-text">' + r.desc + '</div>' +
+        (r.action ? '<div style="font-size:10px;color:var(--ff-muted);margin-top:3px;">Action: ' + r.action + '</div>' : '') +
+        '<div style="font-size:9px;color:var(--ff-muted);margin-top:3px;">Signed: ' + r.signature + (r.vetContacted ? ' · Vet contacted' : '') + (r.ownerNotified ? ' · Owner notified' : '') + '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+  }
+  document.getElementById('incidentViewModal').style.display = 'flex';
+}
+
+// ════════════════════════════════════════
+// CHURN / OUTREACH TRACKING
+// ════════════════════════════════════════
+function updateLastVisit(dogName) {
+  if (!P[dogName]) P[dogName] = {};
+  P[dogName]._lastVisit = new Date().toLocaleDateString('en-CA');
+  saveProfiles();
+}
+
+function getChurnStatus(dogName) {
+  const p = P[dogName];
+  if (!p?._lastVisit) return null;
+  const days = Math.round((new Date() - new Date(p._lastVisit)) / 86400000);
+  if (days >= 60) return { days, level: 'overdue', label: days + 'd since last visit' };
+  if (days >= 30) return { days, level: 'warning', label: days + 'd since last visit' };
+  return null;
+}
+
+function renderOutreachBanner() {
+  // Check all known dogs not currently in today's board
+  const todayNames = dogs.map(d => d.name);
+  const overdue = [];
+  Object.keys(P).forEach(function(name) {
+    if (todayNames.includes(name)) return;
+    const status = getChurnStatus(name);
+    if (status) overdue.push({ name, status, p: P[name] });
+  });
+
+  const el = document.getElementById('outreachBar');
+  if (!el) return;
+  if (!overdue.length) { el.style.display = 'none'; return; }
+
+  el.style.display = 'flex';
+  el.innerHTML = '<span style="font-size:14px;">💙</span>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:5px;">' +
+    overdue.slice(0,5).map(function(item) {
+      return '<div class="outreach-chip">' +
+        item.name + ' — ' + item.status.label +
+        ' <button onclick="draftOutreachEmail(&quot;' + item.name + '&quot;)">Draft</button>' +
+        '</div>';
+    }).join('') +
+    (overdue.length > 5 ? '<div class="outreach-chip">+' + (overdue.length-5) + ' more</div>' : '') +
+    '</div>';
+}
+
+function draftOutreachEmail(dogName) {
+  const p = P[dogName] || {};
+  const days = getChurnStatus(dogName)?.days || '?';
+  const firstName = p.owner || 'there';
+  const body = ['Hi ' + firstName + ',', '', 'We have not seen ' + dogName + ' in a little while and just wanted to check in — is everything okay?', '', 'We miss having ' + dogName + ' around and the whole pack would love to see them back. If there is anything we can do or if you have any questions, please do not hesitate to reach out!', '', 'Catch ya later!', 'The Fetching Forever Team', '3080 Cambie St, Vancouver BC', '1 (604) 977-3647'].join('\n');
+  emailDog = { email: p.email, subject: 'We miss ' + dogName + '! 🐾', body: body };
+  document.getElementById('emailPreview').textContent = ['To: ' + (p.email || '[owner email]'), 'Subject: We miss ' + dogName + '!', '', body].join('\n');
+  document.getElementById('emailModal').style.display = 'flex';
+}
+
 // ════════════════════════════════════════
 // LOCAL STORAGE — persist board state across sessions
 // ════════════════════════════════════════
@@ -2458,6 +2824,102 @@ setTimeout(loadFromSheets, 500);
 
 <!-- CONFETTI CANVAS -->
 <canvas id="confettiCanvas" style="display:none;"></canvas>
+
+
+<!-- VET / FIRST AID MODAL -->
+<div class="modal-overlay" id="vetModal" style="display:none;" onclick="if(event.target===this)closeVetModal()">
+  <div class="modal" style="max-width:420px;">
+    <button class="modal-close" onclick="closeVetModal()">✕</button>
+    <div class="modal-title">🏥 Health & Emergency Info</div>
+    <div id="vetModalBody"></div>
+  </div>
+</div>
+
+<!-- INCIDENT REPORT MODAL -->
+<div class="modal-overlay" id="incidentModal" style="display:none;" onclick="if(event.target===this)closeIncidentModal()">
+  <div class="modal" style="max-width:540px;">
+    <button class="modal-close" onclick="closeIncidentModal()">✕</button>
+    <div class="modal-title">📋 Incident Report</div>
+    <div id="incidentDogInfo" style="font-size:13px;color:#F4BE40;font-weight:700;margin-bottom:14px;"></div>
+
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ff-muted);margin-bottom:7px;">Incident Type</div>
+    <div class="incident-type-grid">
+      <button class="incident-type-btn" onclick="selectIncidentType('Dog-dog altercation',this)">🐕 Dog-Dog Altercation</button>
+      <button class="incident-type-btn" onclick="selectIncidentType('Dog-human bite or scratch',this)">🤚 Dog-Human Bite/Scratch</button>
+      <button class="incident-type-btn" onclick="selectIncidentType('Injury — dog',this)">🩹 Injury (Dog)</button>
+      <button class="incident-type-btn" onclick="selectIncidentType('Injury — staff',this)">🩹 Injury (Staff)</button>
+      <button class="incident-type-btn" onclick="selectIncidentType('Illness or vomiting',this)">🤒 Illness / Vomiting</button>
+      <button class="incident-type-btn" onclick="selectIncidentType('Property damage',this)">🏚️ Property Damage</button>
+      <button class="incident-type-btn" onclick="selectIncidentType('Escape or flight risk',this)">🚨 Escape / Flight Risk</button>
+      <button class="incident-type-btn" onclick="selectIncidentType('Other',this)">📋 Other</button>
+    </div>
+
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ff-muted);margin-bottom:7px;">Severity</div>
+    <div class="severity-row">
+      <button class="severity-btn" id="sev-minor" onclick="selectSeverity('Minor',this)">🟢 Minor</button>
+      <button class="severity-btn" id="sev-moderate" onclick="selectSeverity('Moderate',this)">🟡 Moderate</button>
+      <button class="severity-btn" id="sev-serious" onclick="selectSeverity('Serious',this)">🔴 Serious</button>
+    </div>
+
+    <div class="form-row" style="margin-bottom:10px;">
+      <div class="form-group">
+        <label>Staff Member Present</label>
+        <select id="incident-staff">
+          <option value="">— Select staff —</option>
+          <option>Jay</option>
+          <option>Sarah</option>
+          <option>Eliza</option>
+          <option>Adam</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Time of Incident</label>
+        <input type="time" id="incident-time">
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>Description</label>
+      <textarea id="incident-desc" placeholder="Describe exactly what happened..." style="min-height:80px;"></textarea>
+    </div>
+
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>Action Taken</label>
+      <textarea id="incident-action" placeholder="What was done in response..." style="min-height:60px;"></textarea>
+    </div>
+
+    <div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
+        <input type="checkbox" id="incident-vet" style="accent-color:var(--ff-red);width:14px;height:14px;">
+        Vet was contacted
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
+        <input type="checkbox" id="incident-owner" style="accent-color:var(--ff-red);width:14px;height:14px;">
+        Owner was notified
+      </label>
+    </div>
+
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>Staff Signature (type full name to confirm)</label>
+      <input type="text" id="incident-sig" placeholder="Type your full name...">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeIncidentModal()">Cancel</button>
+      <button class="btn btn-sm" style="background:var(--ff-red);color:white;" onclick="submitIncidentReport()">📋 File Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- INCIDENT VIEW MODAL -->
+<div class="modal-overlay" id="incidentViewModal" style="display:none;" onclick="if(event.target===this)document.getElementById('incidentViewModal').style.display='none'">
+  <div class="modal" style="max-width:500px;">
+    <button class="modal-close" onclick="document.getElementById('incidentViewModal').style.display='none'">✕</button>
+    <div class="modal-title">📋 Incident History</div>
+    <div id="incidentViewBody"></div>
+  </div>
+</div>
 
 <!-- REMOVE DOG MODAL -->
 <div class="modal-overlay" id="removeModal" style="display:none;" onclick="if(event.target===this)closeRemoveModal()">
