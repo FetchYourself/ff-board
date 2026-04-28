@@ -317,6 +317,45 @@
   .outreach-bar{background:rgba(91,155,213,0.08);border:1px solid rgba(91,155,213,0.25);border-radius:8px;padding:9px 12px;margin-bottom:12px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;}
   .outreach-chip{background:rgba(91,155,213,0.12);border:1px solid rgba(91,155,213,0.3);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--ff-blue);display:flex;align-items:center;gap:5px;}
   .outreach-chip button{background:var(--ff-blue);color:white;border:none;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:700;cursor:pointer;}
+
+  /* ── STAFF ON DUTY ── */
+  .staff-bar{background:rgba(35,63,149,0.15);border:1px solid rgba(35,63,149,0.35);border-radius:8px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .staff-bar-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ff-muted);flex-shrink:0;}
+  .staff-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(35,63,149,0.2);border:1px solid rgba(35,63,149,0.4);border-radius:14px;padding:3px 10px;font-size:11px;font-weight:600;color:#8899dd;cursor:default;}
+  .staff-chip.lead{background:rgba(244,190,64,0.12);border-color:rgba(244,190,64,0.35);color:#F4BE40;}
+  .staff-chip .staff-hours{font-size:9px;color:var(--ff-muted);font-weight:400;margin-left:2px;}
+
+  /* ── STAFF SCHEDULE MINI GANTT ── */
+  .schedule-widget{background:var(--ff-card);border:1px solid var(--ff-border);border-radius:9px;padding:10px 14px;margin-bottom:14px;position:relative;}
+  .schedule-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .schedule-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ff-muted);display:flex;align-items:center;gap:5px;}
+  .schedule-sync-btn{background:none;border:none;font-size:10px;color:var(--ff-muted);cursor:pointer;padding:2px 5px;border-radius:3px;transition:color 0.15s;}
+  .schedule-sync-btn:hover{color:var(--ff-golden,#F4BE40);}
+  .gantt-wrap{overflow-x:auto;}
+  .gantt-grid{position:relative;min-width:400px;}
+  .gantt-time-labels{display:flex;margin-left:72px;margin-bottom:3px;}
+  .gantt-time-label{font-size:8px;color:var(--ff-muted);text-align:left;flex-shrink:0;}
+  .gantt-row{display:flex;align-items:center;margin-bottom:3px;height:18px;}
+  .gantt-name{font-size:9px;font-weight:700;width:68px;flex-shrink:0;color:var(--ff-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:4px;}
+  .gantt-track{position:relative;flex:1;height:14px;background:rgba(255,255,255,0.04);border-radius:3px;overflow:hidden;}
+  .gantt-bar{position:absolute;height:100%;border-radius:3px;top:0;}
+  .gantt-now-line{position:absolute;top:0;bottom:0;width:1px;background:rgba(244,190,64,0.8);z-index:5;pointer-events:none;}
+  .gantt-now-line::before{content:'NOW';position:absolute;top:-11px;left:-10px;font-size:7px;font-weight:700;color:#F4BE40;letter-spacing:0.3px;}
+  .gantt-off{font-size:8px;color:rgba(255,255,255,0.15);position:absolute;left:4px;top:50%;transform:translateY(-50%);}
+
+  /* Staff color palette */
+  .gc-0{background:#233F95;}  /* Splash blue */
+  .gc-1{background:#F4BE40;}  /* Golden */
+  .gc-2{background:#5cb85c;}  /* Green */
+  .gc-3{background:#e05252;}  /* Red */
+  .gc-4{background:#9b59b6;}  /* Purple */
+  .gc-5{background:#e67e22;}  /* Orange */
+  .gc-6{background:#1abc9c;}  /* Teal */
+  .gc-7{background:#e91e8c;}  /* Pink */
+  .gc-8{background:#3498db;}  /* Light blue */
+  .gc-9{background:#7f8c8d;}  /* Gray */
+  .gc-10{background:#f39c12;} /* Amber */
+  .gc-11{background:#27ae60;} /* Dark green */
   /* ── REMOVE DOG ── */
   .remove-btn{width:26px;height:26px;border-radius:5px;border:1px solid rgba(224,82,82,0.3);background:none;color:rgba(224,82,82,0.5);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;}
   .remove-btn:hover{border-color:var(--ff-red);color:var(--ff-red);background:var(--ff-red-dim);}
@@ -425,6 +464,18 @@
   <!-- BOARD -->
   <div class="section active" id="section-board">
     <div id="vaxAlerts"></div>
+    <div class="schedule-widget" id="scheduleWidget">
+      <div class="schedule-header">
+        <div class="schedule-title">👥 Today's Coverage</div>
+        <button class="schedule-sync-btn" onclick="syncSchedule()" title="Sync from Google Sheets">⟳ Sync</button>
+      </div>
+      <div class="gantt-wrap">
+        <div class="gantt-grid" id="ganttGrid">
+          <div style="font-size:10px;color:var(--ff-muted);padding:4px 0;">Loading schedule...</div>
+        </div>
+      </div>
+    </div>
+    <div class="staff-bar" id="staffBar" style="display:none;"></div>
     <div class="outreach-bar" id="outreachBar" style="display:none;"></div>
     <div class="search-bar">
       <input class="search-input" type="text" placeholder="Search dog or owner..." id="searchInput" oninput="renderBoard()">
@@ -2623,6 +2674,372 @@ function draftOutreachEmail(dogName) {
   document.getElementById('emailModal').style.display = 'flex';
 }
 
+
+// ════════════════════════════════════════
+// STAFF SCHEDULE — reads from FF Schedule sheet
+// ════════════════════════════════════════
+const SCHEDULE_SHEET_ID = '19eTH3I5F55XlbuhgdnoMeVT-W3zUKFQK8KkznlVQEKU';
+
+// Staff roles for display
+const STAFF_ROLES = {
+  'jay': 'Ops',
+  'sarah': 'GM',
+  'lainey': 'Super',
+  'selina': 'Super',
+  'gigi': 'DCA',
+  'mercedes': 'DCA',
+  'adam': 'DCA',
+  'nicola': 'DCA',
+  'tara': 'DCA',
+  'dezz': 'DCA',
+  'kaori': 'Groom',
+  'alina': 'Groom',
+  'luna': 'DCA',
+  'saraluna': 'DCA',
+};
+
+const LEAD_ROLES = ['ops','gm','super'];
+let todayStaff = []; // [{name, hours, role, isLead}]
+
+async function loadStaffSchedule() {
+  try {
+    const today = new Date();
+    const dayNum = today.getDate();
+    const apiKey = 'AIzaSyCyU0QL-lXFprXDDLNoCsBPNEvjGCbE_Yc';
+    const range = 'Sheet1!A1:P200';
+
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('Schedule fetch failed');
+    const data = await resp.json();
+    if (!data.values) return;
+
+    const rows = data.values;
+    todayStaff = [];
+
+    // Find the row that has today's date number as a column header
+    let dateColIdx = -1;
+    let headerRowIdx = -1;
+
+    for (let r = 0; r < rows.length; r++) {
+      const row = rows[r];
+      for (let c = 0; c < row.length; c++) {
+        const cell = String(row[c] || '').trim();
+        if (cell === String(dayNum)) {
+          dateColIdx = c;
+          headerRowIdx = r;
+          break;
+        }
+      }
+      if (dateColIdx >= 0) break;
+    }
+
+    if (dateColIdx < 0) {
+      console.log('Staff: date', dayNum, 'not found in schedule');
+      return;
+    }
+
+    // Now scan rows after the header for staff entries
+    // Staff rows have name in column B (index 1) and shift in dateColIdx
+    for (let r = headerRowIdx + 1; r < Math.min(rows.length, headerRowIdx + 25); r++) {
+      const row = rows[r];
+      const nameCell = String(row[1] || '').trim();
+      const shiftCell = String(row[dateColIdx] || '').trim();
+
+      if (!nameCell || nameCell === '---' || nameCell.toLowerCase().includes('phrs') ||
+          nameCell.toLowerCase().includes('trial') || nameCell.toLowerCase().includes('boarding') ||
+          nameCell.toLowerCase().includes('interview') || nameCell.toLowerCase().includes('delivery')) continue;
+
+      // Extract first name from "Jay 604-600-4491 Ops Man" format
+      const firstName = nameCell.split(' ')[0];
+      if (!firstName || firstName === '---') continue;
+
+      // Skip if no shift or off
+      if (!shiftCell || shiftCell === '---' || shiftCell.toLowerCase() === 'rto' ||
+          shiftCell.toLowerCase() === 'abs' || shiftCell.toLowerCase() === 'stat' ||
+          shiftCell.toLowerCase() === 'sick') continue;
+
+      // Check second row for split shifts (some staff have two rows)
+      let hours = shiftCell;
+      if (r + 1 < rows.length) {
+        const nextRow = rows[r + 1];
+        const nextName = String(nextRow[1] || '').trim();
+        if (!nextName || nextName === '') {
+          const nextShift = String(nextRow[dateColIdx] || '').trim();
+          if (nextShift && nextShift !== '---') {
+            hours = hours + ' / ' + nextShift;
+          }
+        }
+      }
+
+      const nameLower = firstName.toLowerCase();
+      const role = STAFF_ROLES[nameLower] || 'Staff';
+      const isLead = LEAD_ROLES.includes(role.toLowerCase());
+
+      todayStaff.push({ name: firstName, hours: hours, role: role, isLead: isLead });
+    }
+
+    renderStaffBar();
+    // Update incident report staff dropdown
+    updateIncidentStaffDropdown();
+    console.log('Staff loaded:', todayStaff.map(s => s.name).join(', '));
+
+  } catch(err) {
+    console.warn('Staff schedule load failed:', err.message);
+  }
+}
+
+function renderStaffBar() {
+  const bar = document.getElementById('staffBar');
+  if (!bar) return;
+  if (!todayStaff.length) { bar.style.display = 'none'; return; }
+
+  bar.style.display = 'flex';
+  bar.innerHTML = '<span class="staff-bar-label">👥 On Duty</span>' +
+    todayStaff.map(function(s) {
+      return '<div class="staff-chip ' + (s.isLead ? 'lead' : '') + '" title="' + s.hours + '">' +
+        s.name + ' <span class="staff-hours">' + s.role + ' · ' + s.hours + '</span>' +
+        '</div>';
+    }).join('');
+}
+
+function updateIncidentStaffDropdown() {
+  const sel = document.getElementById('incident-staff');
+  if (!sel || !todayStaff.length) return;
+  sel.innerHTML = '<option value="">— Select staff —</option>' +
+    todayStaff.map(function(s) {
+      return '<option value="' + s.name + '">' + s.name + ' (' + s.role + ')</option>';
+    }).join('') +
+    '<option value="Other">Other</option>';
+}
+
+
+// ════════════════════════════════════════
+// STAFF SCHEDULE — Mini Gantt Chart
+// ════════════════════════════════════════
+// Parse a time string like "645a", "11a", "230p", "1130p" to minutes since midnight
+function parseShiftTime(s) {
+  if (!s) return null;
+  s = s.toLowerCase().trim();
+  const isPM = s.includes('p') && !s.includes('12p');
+  const isAM = s.includes('a');
+  const num = s.replace(/[ap].*$/,'').trim();
+  let h, m;
+  if (num.length <= 2) { h = parseInt(num); m = 0; }
+  else if (num.length === 3) { h = parseInt(num[0]); m = parseInt(num.slice(1)); }
+  else { h = parseInt(num.slice(0,2)); m = parseInt(num.slice(2)); }
+  if (isPM && h !== 12) h += 12;
+  if (isAM && h === 12) h = 0;
+  return h * 60 + m;
+}
+
+// Parse "645a-230p" or "645a-C" (C = close ~8pm) into {start, end} minutes
+function parseShift(raw) {
+  if (!raw || raw === '---' || raw === 'off' || raw === 'RTO' || raw === 'Abs' || raw === 'Stat' || raw === 'sick') return null;
+  // Handle "C" as close = 8pm = 1200 mins, "O" as open = 6:45am = 405 mins
+  const cleaned = raw.replace(/\s+/g,'').toLowerCase();
+  if (cleaned.startsWith('o-') || cleaned.startsWith('o–')) return { start:405, end:parseShiftTime(cleaned.slice(2)) || 1200 };
+  const parts = cleaned.split('-');
+  if (parts.length < 2) return null;
+  const start = parseShiftTime(parts[0]);
+  const end = parts[1] === 'c' ? 1200 : parseShiftTime(parts[1]);
+  if (!start || !end) return null;
+  return { start, end };
+}
+
+// Staff to always exclude from the Gantt
+const SCHEDULE_EXCLUDE = ['kaori', 'alina'];
+// Roles that indicate grooming-only (skip these rows)
+const GROOM_ONLY_INDICATORS = ['gr ', 'groom', 'jmg', 'master groomer', 'fusion groom', 'west coast groom'];
+
+function isGroomRow(nameCell, shiftCell) {
+  const nameLow = (nameCell || '').toLowerCase();
+  const shiftLow = (shiftCell || '').toLowerCase();
+  // Gigi's groom rows start with "GR" or "Groom"
+  if (shiftLow.startsWith('gr ') || shiftLow.startsWith('groom')) return true;
+  return false;
+}
+
+function isExcludedStaff(name) {
+  const n = name.toLowerCase();
+  return SCHEDULE_EXCLUDE.some(ex => n.startsWith(ex));
+}
+
+// Find today's column in the schedule sheet data
+function findTodayShifts(sheetValues) {
+  const today = new Date();
+  const todayDate = today.getDate();
+  const todayDay = today.getDay(); // 0=Sun, 1=Mon...
+
+  let result = [];
+
+  // Walk through rows looking for date rows and staff rows
+  let currentDates = [];
+  let dateColOffset = 2; // columns start at index 2 (after --- and FF TEAM)
+
+  for (let i = 0; i < sheetValues.length; i++) {
+    const row = sheetValues[i];
+    if (!row) continue;
+
+    // Check if this is a date row (row[2] is a number matching today)
+    const possibleDates = row.slice(2, 16);
+    const dateMatch = possibleDates.findIndex(function(d) {
+      return d && parseInt(String(d)) === todayDate;
+    });
+
+    if (dateMatch >= 0) {
+      currentDates = possibleDates;
+      const todayColIdx = dateMatch;
+
+      // Now scan following rows for staff entries
+      let staffRowCount = 0;
+      for (let j = i + 1; j < Math.min(i + 25, sheetValues.length); j++) {
+        const staffRow = sheetValues[j];
+        if (!staffRow || !staffRow[1]) continue;
+        staffRowCount++;
+        if (staffRowCount === 5) continue; // skip row 5 (Jay's other job row)
+        const nameCell = String(staffRow[1] || '');
+        if (!nameCell || nameCell === 'FF TEAM' || nameCell === 'PHRS' ||
+            nameCell === 'Boarding' || nameCell === 'Trial Slots' ||
+            nameCell === 'Delivery' || nameCell === 'Interviews/Meetings/Reps') continue;
+
+        // Extract first name only
+        const firstName = nameCell.split(' ')[0].replace(/[^a-zA-Z]/g,'');
+        if (!firstName || firstName.length < 2) continue;
+        if (isExcludedStaff(firstName)) continue;
+
+        const shiftRaw = staffRow[todayColIdx + 2] || '';
+        const shift2Raw = staffRow[todayColIdx + 2 + 7] || ''; // sometimes two rows per person
+
+        // Skip grooming-only rows (e.g. Gigi's GR rows)
+        if (isGroomRow(nameCell, shiftRaw)) continue;
+
+        const shift = parseShift(String(shiftRaw));
+        const shift2 = parseShift(String(shift2Raw));
+
+        // Combine shifts if both present
+        let finalShift = null;
+        if (shift && shift2) {
+          finalShift = { start: Math.min(shift.start, shift2.start), end: Math.max(shift.end, shift2.end) };
+        } else {
+          finalShift = shift || shift2;
+        }
+
+        if (finalShift && finalShift.end > finalShift.start) {
+          result.push({ name: firstName, shift: finalShift, raw: String(shiftRaw) });
+        }
+      }
+      break; // Found our date block
+    }
+  }
+
+  return result;
+}
+
+function renderGantt(staffShifts) {
+  const grid = document.getElementById('ganttGrid');
+  if (!grid) return;
+
+  if (!staffShifts || !staffShifts.length) {
+    grid.innerHTML = '<div style="font-size:10px;color:var(--ff-muted);padding:4px 0;">No schedule data for today.</div>';
+    return;
+  }
+
+  // Day span: 6am (360) to 8pm (1200)
+  const DAY_START = 360;
+  const DAY_END = 1200;
+  const SPAN = DAY_END - DAY_START;
+
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const nowPct = Math.max(0, Math.min(100, ((nowMins - DAY_START) / SPAN) * 100));
+
+  // Time labels every 2 hours
+  const timeLabels = [];
+  for (let m = DAY_START; m <= DAY_END; m += 120) {
+    const h = Math.floor(m/60);
+    const label = h > 12 ? (h-12)+'p' : h === 12 ? '12p' : h+'a';
+    const pct = ((m - DAY_START) / SPAN) * 100;
+    timeLabels.push('<div class="gantt-time-label" style="position:absolute;left:' + pct + '%;">' + label + '</div>');
+  }
+
+  const rows = staffShifts.map(function(s, i) {
+    const startPct = Math.max(0, ((s.shift.start - DAY_START) / SPAN) * 100);
+    const endPct = Math.min(100, ((s.shift.end - DAY_START) / SPAN) * 100);
+    const widthPct = Math.max(1, endPct - startPct);
+    return '<div class="gantt-row">' +
+      '<div class="gantt-name" title="' + s.name + ' — ' + s.raw + '">' + s.name + '</div>' +
+      '<div class="gantt-track">' +
+        '<div class="gantt-bar gc-' + (i % 12) + '" style="left:' + startPct + '%;width:' + widthPct + '%;" title="' + s.raw + '"></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  // Walk time lines at 8am, 11am, 1:30pm
+  const walkTimes = [
+    { mins: 480, label: '8A' },
+    { mins: 660, label: '11A' },
+    { mins: 810, label: '1:30P' }
+  ];
+  const walkLines = walkTimes.map(function(w) {
+    const pct = Math.max(0, Math.min(100, ((w.mins - DAY_START) / SPAN) * 100));
+    return '<div style="position:absolute;top:0;bottom:0;left:' + pct + '%;width:1px;background:rgba(244,190,64,0.25);z-index:3;pointer-events:none;">' +
+      '<div style="position:absolute;top:-11px;left:-8px;font-size:7px;font-weight:700;color:rgba(244,190,64,0.6);letter-spacing:0.2px;">' + w.label + '</div>' +
+    '</div>';
+  }).join('');
+
+  grid.innerHTML =
+    '<div style="position:relative;margin-left:72px;height:12px;margin-bottom:2px;">' +
+      timeLabels.join('') +
+    '</div>' +
+    '<div style="position:relative;">' +
+      walkLines +
+      rows +
+      '<div class="gantt-now-line" style="left:calc(72px + ' + nowPct + '% * ((100% - 72px) / 100));"></div>' +
+    '</div>';
+}
+
+async function syncSchedule() {
+  const grid = document.getElementById('ganttGrid');
+  if (grid) grid.innerHTML = '<div style="font-size:10px;color:var(--ff-muted);padding:4px 0;"><span class="spinner"></span> Loading...</div>';
+
+  try {
+    const resp = await fetch(WORKER_URL + '?action=schedule&sheetId=' + SCHEDULE_SHEET_ID);
+    if (!resp.ok) throw new Error('Failed');
+    const data = await resp.json();
+    if (data.values) {
+      const shifts = findTodayShifts(data.values);
+      renderGantt(shifts);
+      // Cache it
+      try { localStorage.setItem('ff_schedule', JSON.stringify({ date: new Date().toLocaleDateString('en-CA'), shifts })); } catch(e) {}
+    }
+  } catch(err) {
+    // Fall back to cached or hardcoded
+    loadCachedSchedule();
+  }
+}
+
+function loadCachedSchedule() {
+  try {
+    const cached = localStorage.getItem('ff_schedule');
+    if (cached) {
+      const { date, shifts } = JSON.parse(cached);
+      if (date === new Date().toLocaleDateString('en-CA') && shifts) {
+        renderGantt(shifts);
+        return;
+      }
+    }
+  } catch(e) {}
+  // Hardcoded fallback for today (Apr 27 Monday)
+  renderGantt([
+    { name:'Sarah', shift:{start:405,end:690}, raw:'645a-1130a' },
+    { name:'Nicola', shift:{start:495,end:960}, raw:'815a-4p' },
+    { name:'Tara', shift:{start:540,end:840}, raw:'9a-2p' },
+    { name:'Mercedes', shift:{start:660,end:1065}, raw:'11a-545p' },
+    { name:'Selina', shift:{start:690,end:1170}, raw:'1130a-730p' },
+    { name:'Jay', shift:{start:750,end:1200}, raw:'1230p-C' },
+  ]);
+}
+
 // ════════════════════════════════════════
 // LOCAL STORAGE — persist board state across sessions
 // ════════════════════════════════════════
@@ -2784,6 +3201,8 @@ window.renderBoard = function() {
 renderBoard();
 checkBirthdaysOnLoad();
 setTimeout(loadFromSheets, 500);
+setTimeout(loadCachedSchedule, 100);
+setTimeout(loadStaffSchedule, 1000);
 
 </script>
 
