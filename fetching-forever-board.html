@@ -326,7 +326,11 @@
   .staff-chip .staff-hours{font-size:9px;color:var(--ff-muted);font-weight:400;margin-left:2px;}
 
   /* ── STAFF SCHEDULE MINI GANTT ── */
-  .schedule-widget{background:var(--ff-card);border:1px solid var(--ff-border);border-radius:9px;padding:10px 14px;margin-bottom:14px;position:relative;}
+  .schedule-widget{background:var(--ff-card);border:1px solid var(--ff-border);border-radius:9px;padding:8px 14px;margin-bottom:14px;position:relative;transition:all 0.25s;}
+  .schedule-widget.collapsed .gantt-wrap{display:none;}
+  .schedule-widget.collapsed{padding-bottom:8px;}
+  .gantt-toggle{background:none;border:none;color:var(--ff-muted);font-size:11px;cursor:pointer;padding:0 4px;transition:transform 0.2s;}
+  .schedule-widget.collapsed .gantt-toggle{transform:rotate(-90deg);}
   .schedule-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
   .schedule-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ff-muted);display:flex;align-items:center;gap:5px;}
   .schedule-sync-btn{background:none;border:none;font-size:10px;color:var(--ff-muted);cursor:pointer;padding:2px 5px;border-radius:3px;transition:color 0.15s;}
@@ -356,6 +360,36 @@
   .gc-9{background:#7f8c8d;}  /* Gray */
   .gc-10{background:#f39c12;} /* Amber */
   .gc-11{background:#27ae60;} /* Dark green */
+
+  /* ── MEAL BREAKS ── */
+  .gantt-break{position:absolute;height:100%;background:rgba(128,128,128,0.55);border-left:1px solid rgba(200,200,200,0.6);border-right:1px solid rgba(200,200,200,0.6);z-index:6;cursor:ew-resize;border-radius:1px;transition:background 0.15s;}
+  .gantt-break:hover{background:rgba(180,180,180,0.75);}
+  .gantt-break.dragging{background:rgba(220,220,220,0.85);cursor:grabbing;}
+  .gantt-break-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:6px;font-weight:700;color:rgba(255,255,255,0.9);white-space:nowrap;pointer-events:none;letter-spacing:0.2px;}
+
+  /* ── MEAL EDITOR ── */
+  .meal-editor{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+  .meal-editor-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--ff-card);border-radius:7px;border:1px solid var(--ff-border);}
+  .meal-editor-label{font-size:11px;font-weight:700;color:var(--ff-golden,#F4BE40);width:70px;flex-shrink:0;}
+  .meal-slot-btn{padding:4px 10px;border-radius:5px;border:1px solid var(--ff-border);background:none;color:var(--ff-muted);font-size:10px;font-weight:700;cursor:pointer;transition:all 0.15s;}
+  .meal-slot-btn.active{background:rgba(244,190,64,0.15);border-color:var(--ff-golden,#F4BE40);color:var(--ff-golden,#F4BE40);}
+  .meal-slot-btn:hover{border-color:var(--ff-golden,#F4BE40);color:var(--ff-golden,#F4BE40);}
+  .meal-delete-btn{margin-left:auto;background:none;border:1px solid rgba(224,82,82,0.3);border-radius:5px;color:rgba(224,82,82,0.5);font-size:10px;padding:3px 8px;cursor:pointer;transition:all 0.15s;}
+  .meal-delete-btn:hover{border-color:var(--ff-red);color:var(--ff-red);background:var(--ff-red-dim);}
+
+  /* ── MEDICATIONS ── */
+  .pill-btn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:rgba(156,39,176,0.15);border:1px solid rgba(156,39,176,0.5);cursor:pointer;font-size:13px;transition:all 0.15s;flex-shrink:0;position:relative;}
+  .pill-btn.pending{animation:pill-throb 1.2s ease-in-out infinite;border-color:#9c27b0;}
+  .pill-btn.done{background:rgba(76,175,116,0.15);border-color:var(--ff-green);animation:none;}
+  .pill-btn.done::after{content:'✓';position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;background:var(--ff-green);border-radius:50%;font-size:7px;display:flex;align-items:center;justify-content:center;color:white;line-height:10px;text-align:center;}
+  /* Meal time alerts */
+  .meal-btn.meal-due{border-color:var(--ff-red)!important;animation:meal-pulse 1s ease-in-out infinite;}
+  .meal-btn.meal-due .meal-letter{color:var(--ff-red)!important;}
+  .meal-btn.meal-soon{border-color:var(--ff-yellow)!important;}
+  .meal-btn.meal-soon .meal-letter{color:var(--ff-yellow)!important;}
+  @keyframes meal-pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,82,82,0.4);}50%{box-shadow:0 0 0 4px rgba(224,82,82,0);}}
+
+  @keyframes pill-throb{0%,100%{box-shadow:0 0 0 0 rgba(156,39,176,0.5);transform:scale(1);}50%{box-shadow:0 0 0 5px rgba(156,39,176,0);transform:scale(1.12);}}
   /* ── REMOVE DOG ── */
   .remove-btn{width:26px;height:26px;border-radius:5px;border:1px solid rgba(224,82,82,0.3);background:none;color:rgba(224,82,82,0.5);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;}
   .remove-btn:hover{border-color:var(--ff-red);color:var(--ff-red);background:var(--ff-red-dim);}
@@ -465,12 +499,12 @@
   <div class="section active" id="section-board">
     <div id="vaxAlerts"></div>
     <div class="schedule-widget" id="scheduleWidget">
-      <div class="schedule-header">
-        <div class="schedule-title">👥 Today's Coverage</div>
-        <button class="schedule-sync-btn" onclick="syncSchedule()" title="Sync from Google Sheets">⟳ Sync</button>
+      <div class="schedule-header" style="cursor:pointer;" onclick="toggleGantt()">
+        <div class="schedule-title">👥 Today's Coverage <span id="ganttToggleArrow" style="color:var(--ff-muted);font-size:10px;margin-left:4px;">▾</span></div>
+        <button class="schedule-sync-btn" onclick="event.stopPropagation();syncSchedule()" title="Sync from Google Sheets">⟳ Sync</button>
       </div>
-      <div class="gantt-wrap">
-        <div class="gantt-grid" id="ganttGrid">
+      <div class="gantt-wrap" id="ganttWrap" style="max-height:60px;overflow:hidden;transition:max-height 0.3s ease;">
+        <div class="gantt-grid" id="ganttGrid" style="transform:scale(0.65);transform-origin:top left;width:154%;">
           <div style="font-size:10px;color:var(--ff-muted);padding:4px 0;">Loading schedule...</div>
         </div>
       </div>
@@ -591,6 +625,19 @@
     <button class="modal-close" onclick="closeModal()">✕</button>
     <div class="modal-title" id="modalTitle"></div>
     <div id="modalBody"></div>
+    <!-- Meal Editor — leads only -->
+    <div style="margin-top:14px;border-top:1px solid var(--ff-border);padding-top:12px;">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ff-muted);margin-bottom:8px;">🍽️ Edit Meals for Today</div>
+      <div class="meal-editor" id="mealEditor"></div>
+      <div style="border-top:1px solid var(--ff-border);margin-top:10px;padding-top:10px;">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#9c27b0;margin-bottom:7px;">💊 Today's Medications</div>
+        <div id="medsEditor" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="newMedInput" placeholder="e.g. Ear drops 2x daily" style="flex:1;background:var(--ff-dark);border:1px solid rgba(156,39,176,0.4);border-radius:6px;padding:6px 10px;color:var(--ff-text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;">
+          <button class="btn btn-sm" style="background:rgba(156,39,176,0.15);border:1px solid rgba(156,39,176,0.4);color:#ce93d8;" onclick="addMed()">+ Add</button>
+        </div>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-secondary btn-sm" onclick="closeModal()">Close</button>
       <button class="btn btn-primary btn-sm" id="draftVaxBtn" style="display:none;">📧 Draft Vax Email</button>
@@ -767,6 +814,20 @@
     <button class="modal-close" onclick="document.getElementById('incidentViewModal').style.display='none'">✕</button>
     <div class="modal-title">📋 Incident History</div>
     <div id="incidentViewBody"></div>
+  </div>
+</div>
+
+
+<!-- MEDS CONFIRM MODAL -->
+<div class="modal-overlay" id="medsConfirmModal" style="display:none;" onclick="if(event.target===this)closeMedsConfirm()">
+  <div class="modal" style="max-width:360px;">
+    <button class="modal-close" onclick="closeMedsConfirm()">✕</button>
+    <div class="modal-title">💊 Administer Medication</div>
+    <div id="medsConfirmBody" style="font-size:13px;color:var(--ff-text);margin-bottom:16px;line-height:1.6;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeMedsConfirm()">Cancel</button>
+      <button class="btn btn-sm" style="background:#9c27b0;color:white;" onclick="confirmMedAdmin()">✅ Mark as Administered</button>
+    </div>
   </div>
 </div>
 
@@ -965,10 +1026,13 @@ let emailDog = null;
 ].forEach(s => dogs.push(mk(s.n,s.a,s.t,s.pen,s.meals,s.g)));
 
 function mk(name, arrival, type, pen, meals, groom) {
+  // Load permanent meal schedule from profile if available
+  const savedMeals = (P[name] && P[name]._meals) ? P[name]._meals : null;
+  const defaultMeals = meals || savedMeals || {b:0, l:type==='full'?1:0, d:0};
   return {
     id: Math.random().toString(36).slice(2),
     name, arrival, type, pen,
-    meals: meals || {b:0,l:type==='full'?1:0,d:0},
+    meals: defaultMeals,
     meals_fed: {b:false,l:false,d:false},
     groom: groom || !!(P[name]?.groomed),
     walks: ["","",""],
@@ -1087,6 +1151,7 @@ function card(d) {
         ${showVaxSyringe ? `<div class="vax-syringe ${vaxPulse?'pulse':''}" onclick="openVaxSyringe('${d.name}')" title="Vax expires ${p.vaxExpiry} — click to update">💉</div>` : ''}
         <button class="icon-btn" onclick="openNoteModal('${d.id}')" title="Add note">📝</button>
         <button class="icon-btn" onclick="openDogModal('${d.id}')" title="Profile">👤</button>
+        ${d.meds && d.meds.some(m => !m.administered) ? `<div class="pill-btn pending" onclick="openMedsConfirm('${d.id}', ${d.meds.findIndex(m => !m.administered)})" title="${d.meds.filter(m=>!m.administered).map(m=>m.name).join(', ')}">💊</div>` : (d.meds && d.meds.length && d.meds.every(m=>m.administered) ? '<div class="pill-btn done" title="All meds given">💊</div>' : '')}
         <button class="incident-btn" onclick="openIncidentModal('${d.id}')" title="File incident report">📋</button>
         <button class="remove-btn" onclick="openRemoveModal('${d.id}')" title="Remove from today">✕</button>
       </div>
@@ -1266,6 +1331,11 @@ function openDogModal(id) {
   btn.style.display = vwarn ? 'inline-flex' : 'none';
   btn.onclick = () => { closeModal(); openVaxEmail(id); };
   document.getElementById('dogModal').style.display='flex';
+  // Render meal editor and meds editor
+  setTimeout(function() {
+    renderMealEditor(id);
+    renderMedsEditor(id);
+  }, 50);
 }
 function closeModal() { document.getElementById('dogModal').style.display='none'; }
 
@@ -1697,8 +1767,13 @@ function postRenderPatches() {
     const isFed = count > 0;
     const meta = MEAL_META[slot];
     const fedLabel = count > 1 ? 'FED ' + count : 'FED';
-    btn.innerHTML = '<span class="meal-letter">' + meta.letter + '</span><span class="meal-word">' + (isFed ? fedLabel : meta.label) + '</span>';
-    btn.className = 'meal-btn' + (isFed ? ' fed' : '');
+    const p2 = P[d.name] || {};
+    const mealTime = (p2._mealTimes && p2._mealTimes[slot]) ? p2._mealTimes[slot] : null;
+    const timeStatus = !isFed ? getMealTimeStatus(d.name, slot) : null;
+    const timeDisplay = mealTime ? formatMealTime(mealTime) : meta.label;
+    const label = isFed ? fedLabel : timeDisplay;
+    btn.innerHTML = '<span class="meal-letter">' + meta.letter + '</span><span class="meal-word">' + label + '</span>';
+    btn.className = 'meal-btn' + (isFed ? ' fed' : '') + (timeStatus === 'due' ? ' meal-due' : '') + (timeStatus === 'soon' ? ' meal-soon' : '');
     btn.oncontextmenu = function(e) { unFeedMeal(e, dogId, slot); };
     btn.onmousedown = function(e) { startLongPress(e, dogId, slot); };
     btn.onmouseup = cancelLongPress;
@@ -2925,7 +3000,8 @@ function findTodayShifts(sheetValues) {
         }
 
         if (finalShift && finalShift.end > finalShift.start) {
-          result.push({ name: firstName, shift: finalShift, raw: String(shiftRaw) });
+          const leadershipNames = ['Jay','Sarah','Lainey','Selina'];
+          result.push({ name: firstName, shift: finalShift, raw: String(shiftRaw), leadership: leadershipNames.indexOf(firstName) >= 0 });
         }
       }
       break; // Found our date block
@@ -2974,28 +3050,62 @@ function renderGantt(staffShifts) {
     '</div>';
   }).join('');
 
-  // Walk time lines at 8am, 11am, 1:30pm
+  // Walk time lines at 8am, 11am, 1:30pm — positioned inside gantt-track (% of track only)
   const walkTimes = [
     { mins: 480, label: '8A' },
     { mins: 660, label: '11A' },
     { mins: 810, label: '1:30P' }
   ];
-  const walkLines = walkTimes.map(function(w) {
-    const pct = Math.max(0, Math.min(100, ((w.mins - DAY_START) / SPAN) * 100));
-    return '<div style="position:absolute;top:0;bottom:0;left:' + pct + '%;width:1px;background:rgba(244,190,64,0.25);z-index:3;pointer-events:none;">' +
-      '<div style="position:absolute;top:-11px;left:-8px;font-size:7px;font-weight:700;color:rgba(244,190,64,0.6);letter-spacing:0.2px;">' + w.label + '</div>' +
+
+  // Walk lines go INSIDE each gantt-track, injected per row
+  // We'll add them via CSS overlay on the track container
+  const walkPcts = walkTimes.map(function(w) {
+    return { pct: Math.max(0, Math.min(100, ((w.mins - DAY_START) / SPAN) * 100)), label: w.label };
+  });
+
+  // Overlay div that goes inside every gantt-track
+  const WALK_WIDTH_PCT = (30 / SPAN) * 100;
+  const walkOverlay = walkPcts.map(function(w) {
+    return '<div style="position:absolute;top:0;bottom:0;left:' + w.pct + '%;width:' + WALK_WIDTH_PCT + '%;' +
+      'background:rgba(76,175,116,0.2);border-left:2px solid rgba(76,175,116,0.9);' +
+      'z-index:5;pointer-events:none;border-radius:0 2px 2px 0;"></div>';
+  }).join('');
+
+  // Time labels row — positioned correctly over the track area
+  const timeLabelsHtml = '<div style="position:relative;margin-left:72px;height:12px;margin-bottom:2px;">' +
+    walkPcts.map(function(w) {
+      return '<div style="position:absolute;left:' + w.pct + '%;font-size:7px;font-weight:700;' +
+        'color:rgba(76,175,116,0.9);transform:translateX(-50%);">' + w.label + '</div>';
+    }).join('') +
+    timeLabels.join('') +
+    '</div>';
+
+  // Rebuild rows with walk overlays inside each track
+  const rowsWithOverlays = staffShifts.map(function(s, i) {
+    const startPct2 = Math.max(0, ((s.shift.start - DAY_START) / SPAN) * 100);
+    const endPct2 = Math.min(100, ((s.shift.end - DAY_START) / SPAN) * 100);
+    const widthPct2 = Math.max(1, endPct2 - startPct2);
+    return '<div class="gantt-row">' +
+      '<div class="gantt-name" title="' + s.name + ' — ' + s.raw + '">' + s.name + '</div>' +
+      '<div class="gantt-track">' +
+        walkOverlay +
+        '<div class="gantt-bar" style="left:' + startPct2 + '%;width:' + widthPct2 + '%;z-index:4;background:' + (s.leadership ? '#F4BE40' : 'rgba(255,255,255,0.85)') + ';border-radius:3px;" title="' + s.raw + '"></div>' +
+      '</div>' +
     '</div>';
   }).join('');
 
-  grid.innerHTML =
-    '<div style="position:relative;margin-left:72px;height:12px;margin-bottom:2px;">' +
-      timeLabels.join('') +
-    '</div>' +
-    '<div style="position:relative;">' +
-      walkLines +
-      rows +
-      '<div class="gantt-now-line" style="left:calc(72px + ' + nowPct + '% * ((100% - 72px) / 100));"></div>' +
-    '</div>';
+  // Now line — simple pct inside the track area
+  const nowLine = (nowMins >= DAY_START && nowMins <= DAY_END)
+    ? '<div style="position:absolute;top:0;bottom:0;left:calc(72px + ' + nowPct + '% * (100% - 72px) / 100);width:2px;background:#F4BE40;z-index:6;pointer-events:none;">' +
+      '<div style="position:absolute;top:-11px;left:-10px;font-size:7px;font-weight:700;color:#F4BE40;">NOW</div></div>'
+    : '';
+
+  grid.innerHTML = timeLabelsHtml + '<div style="position:relative;">' + rowsWithOverlays + nowLine + '</div>';
+
+  // Store for break injection
+  window._lastRenderedShifts = staffShifts;
+  // Inject break blocks after a tick so DOM is ready
+  setTimeout(injectBreakBlocks, 50);
 }
 
 async function syncSchedule() {
@@ -3018,6 +3128,27 @@ async function syncSchedule() {
   }
 }
 
+function toggleGantt() {
+  const wrap = document.getElementById('ganttWrap');
+  const arrow = document.getElementById('ganttToggleArrow');
+  const grid = document.getElementById('ganttGrid');
+  if (!wrap) return;
+  const isCollapsed = wrap.style.maxHeight === '60px' || parseInt(wrap.style.maxHeight) <= 60;
+  if (isCollapsed) {
+    // Expand — full size, no scale
+    wrap.style.maxHeight = '400px';
+    grid.style.transform = 'scale(1)';
+    grid.style.width = '100%';
+    if (arrow) arrow.textContent = '▾';
+  } else {
+    // Collapse — small, scaled down
+    wrap.style.maxHeight = '60px';
+    grid.style.transform = 'scale(0.65)';
+    grid.style.width = '154%';
+    if (arrow) arrow.textContent = '▸';
+  }
+}
+
 function loadCachedSchedule() {
   try {
     const cached = localStorage.getItem('ff_schedule');
@@ -3031,13 +3162,346 @@ function loadCachedSchedule() {
   } catch(e) {}
   // Hardcoded fallback for today (Apr 27 Monday)
   renderGantt([
-    { name:'Sarah', shift:{start:405,end:690}, raw:'645a-1130a' },
-    { name:'Nicola', shift:{start:495,end:960}, raw:'815a-4p' },
-    { name:'Tara', shift:{start:540,end:840}, raw:'9a-2p' },
-    { name:'Mercedes', shift:{start:660,end:1065}, raw:'11a-545p' },
-    { name:'Selina', shift:{start:690,end:1170}, raw:'1130a-730p' },
-    { name:'Jay', shift:{start:750,end:1200}, raw:'1230p-C' },
+    { name:'Sarah',    shift:{start:405,end:690},  raw:'645a-1130a',  leadership:true  },
+    { name:'Nicola',   shift:{start:495,end:960},  raw:'815a-4p',     leadership:false },
+    { name:'Tara',     shift:{start:540,end:840},  raw:'9a-2p',       leadership:false },
+    { name:'Mercedes', shift:{start:660,end:1065}, raw:'11a-545p',    leadership:false },
+    { name:'Selina',   shift:{start:690,end:1170}, raw:'1130a-730p',  leadership:true  },
+    { name:'Jay',      shift:{start:750,end:1200}, raw:'1230p-C',     leadership:true  },
   ]);
+  setTimeout(injectBreakBlocks, 50);
+}
+
+
+// ════════════════════════════════════════
+// MEAL BREAKS — 30min block on Gantt bars
+// ════════════════════════════════════════
+const BREAK_DURATION = 30; // minutes
+const BREAK_SNAP = 15;     // snap to 15-min increments
+const MIN_SHIFT_FOR_BREAK = 300; // 5 hours = 300 mins
+
+// breaks stored as { staffName: breakStartMins }
+let breakPositions = {};
+
+function loadBreakPositions() {
+  try {
+    const saved = localStorage.getItem('ff_breaks_' + new Date().toLocaleDateString('en-CA'));
+    if (saved) breakPositions = JSON.parse(saved);
+  } catch(e) {}
+}
+
+function saveBreakPositions() {
+  try {
+    localStorage.setItem('ff_breaks_' + new Date().toLocaleDateString('en-CA'), JSON.stringify(breakPositions));
+  } catch(e) {}
+}
+
+function getBreakStart(staffEntry) {
+  const shift = staffEntry.shift;
+  const duration = shift.end - shift.start;
+  if (duration < MIN_SHIFT_FOR_BREAK) return null;
+  // Use saved position or default to midpoint
+  if (breakPositions[staffEntry.name] !== undefined) {
+    return breakPositions[staffEntry.name];
+  }
+  // Default: middle of shift, snapped to 15 mins
+  const mid = shift.start + Math.floor(duration / 2);
+  return Math.round(mid / BREAK_SNAP) * BREAK_SNAP;
+}
+
+function formatMins(mins) {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  const ampm = h >= 12 ? 'p' : 'a';
+  const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+  return h12 + (m ? ':' + String(m).padStart(2,'0') : '') + ampm;
+}
+
+// Inject break blocks after gantt renders
+function injectBreakBlocks() {
+  const grid = document.getElementById('ganttGrid');
+  if (!grid) return;
+  const rows = grid.querySelectorAll('.gantt-row');
+  if (!rows.length) return;
+
+  // Get the current shifts from the last rendered data
+  const currentShifts = window._lastRenderedShifts || [];
+
+  rows.forEach(function(rowEl, i) {
+    const s = currentShifts[i];
+    if (!s) return;
+    const breakStart = getBreakStart(s);
+    if (breakStart === null) return;
+
+    const track = rowEl.querySelector('.gantt-track');
+    if (!track) return;
+    if (track.querySelector('.gantt-break')) return; // already injected
+
+    const DAY_START = 360, SPAN = 840; // 6am to 8pm
+    const breakPct = Math.max(0, Math.min(100, ((breakStart - DAY_START) / SPAN) * 100));
+    const breakWidthPct = (BREAK_DURATION / SPAN) * 100;
+    const breakEnd = breakStart + BREAK_DURATION;
+
+    const breakEl = document.createElement('div');
+    breakEl.className = 'gantt-break';
+    breakEl.style.left = breakPct + '%';
+    breakEl.style.width = breakWidthPct + '%';
+    breakEl.title = s.name + ' break: ' + formatMins(breakStart) + ' - ' + formatMins(breakEnd);
+    breakEl.innerHTML = '<div class="gantt-break-label">BREAK</div>';
+
+    // Drag logic
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartBreak = breakStart;
+
+    function onDragStart(e) {
+      isDragging = true;
+      dragStartX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+      dragStartBreak = breakPositions[s.name] !== undefined ? breakPositions[s.name] : breakStart;
+      breakEl.classList.add('dragging');
+      e.preventDefault();
+    }
+
+    function onDragMove(e) {
+      if (!isDragging) return;
+      const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+      const trackRect = track.getBoundingClientRect();
+      const dx = clientX - dragStartX;
+      const dxPct = dx / trackRect.width;
+      const dxMins = dxPct * SPAN;
+      // Snap to 15 mins
+      let newBreak = Math.round((dragStartBreak + dxMins) / BREAK_SNAP) * BREAK_SNAP;
+      // Clamp within shift (with padding)
+      newBreak = Math.max(s.shift.start, Math.min(s.shift.end - BREAK_DURATION, newBreak));
+      const newPct = Math.max(0, Math.min(100 - breakWidthPct, ((newBreak - DAY_START) / SPAN) * 100));
+      breakEl.style.left = newPct + '%';
+      breakEl.title = s.name + ' break: ' + formatMins(newBreak) + ' - ' + formatMins(newBreak + BREAK_DURATION);
+      breakEl.querySelector('.gantt-break-label').textContent = formatMins(newBreak);
+      breakPositions[s.name] = newBreak;
+    }
+
+    function onDragEnd() {
+      if (!isDragging) return;
+      isDragging = false;
+      breakEl.classList.remove('dragging');
+      saveBreakPositions();
+    }
+
+    breakEl.addEventListener('mousedown', onDragStart);
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('mouseup', onDragEnd);
+    breakEl.addEventListener('touchstart', onDragStart, {passive:false});
+    document.addEventListener('touchmove', onDragMove, {passive:false});
+    document.addEventListener('touchend', onDragEnd);
+
+    track.appendChild(breakEl);
+  });
+}
+
+loadBreakPositions();
+
+
+// ════════════════════════════════════════
+// MEAL EDITOR
+// ════════════════════════════════════════
+let mealEditorDogId = null;
+
+function renderMealEditor(dogId) {
+  mealEditorDogId = dogId;
+  const d = dogs.find(d => d.id === dogId);
+  if (!d) return;
+  const editor = document.getElementById('mealEditor');
+  if (!editor) return;
+
+  const slots = ['b', 'l', 'd'];
+  const labels = { b: '🌅 Breakfast', l: '☀️ Lunch', d: '🌙 Dinner' };
+
+  editor.innerHTML = slots.map(function(slot) {
+    const scheduled = d.meals[slot] || 0;
+    const fed = d.meals_fed[slot] || 0;
+    const dq = '&quot;';
+    const p = P[d.name] || {};
+    const savedTime = (p._mealTimes && p._mealTimes[slot]) ? p._mealTimes[slot] : '';
+    return '<div class="meal-editor-row" id="meal-row-' + slot + '">' +
+      '<div class="meal-editor-label">' + labels[slot] + '</div>' +
+      '<button class="meal-slot-btn ' + (scheduled ? 'active' : '') + '" ' +
+        'onclick="toggleMealScheduled(' + dq + dogId + dq + ',' + dq + slot + dq + ')">' +
+        (scheduled ? (fed ? 'Fed' : 'On') : 'Off') +
+      '</button>' +
+      (scheduled > 0 ? '<button class="meal-slot-btn ' + (scheduled >= 2 ? 'active' : '') + '" ' +
+        'onclick="setMealCount(' + dq + dogId + dq + ',' + dq + slot + dq + ',2)" ' +
+        'title="2nd meal">+2</button>' : '') +
+      (scheduled ? '<input type="time" value="' + savedTime + '" ' +
+        'onchange="saveMealTime(' + dq + dogId + dq + ',' + dq + slot + dq + ',this.value)" ' +
+        'style="background:var(--ff-dark);border:1px solid var(--ff-border);border-radius:5px;' +
+        'padding:3px 6px;color:var(--ff-text);font-size:10px;width:80px;outline:none;" ' +
+        'title="Set feed time">' : '') +
+      (scheduled ? '<button class="meal-delete-btn" onclick="removeMealSlot(' + dq + dogId + dq + ',' + dq + slot + dq + ')" title="Remove">&#x2715;</button>' : '') +
+    '</div>';
+  }).join('');
+}
+
+function toggleMealScheduled(dogId, slot) {
+  const d = dogs.find(d => d.id === dogId);
+  if (!d) return;
+  d.meals[slot] = d.meals[slot] ? 0 : 1;
+  if (!d.meals[slot]) d.meals_fed[slot] = 0;
+  renderMealEditor(dogId);
+  renderBoard();
+}
+
+function setMealCount(dogId, slot, count) {
+  const d = dogs.find(d => d.id === dogId);
+  if (!d) return;
+  d.meals[slot] = count;
+  renderMealEditor(dogId);
+  renderBoard();
+}
+
+function removeMealSlot(dogId, slot) {
+  const d = dogs.find(d => d.id === dogId);
+  if (!d) return;
+  d.meals[slot] = 0;
+  d.meals_fed[slot] = 0;
+  renderMealEditor(dogId);
+  renderBoard();
+}
+
+function saveMealTime(dogId, slot, timeVal) {
+  const d = dogs.find(d => d.id === dogId);
+  if (!d) return;
+  // Save to permanent profile
+  if (!P[d.name]) P[d.name] = {};
+  if (!P[d.name]._mealTimes) P[d.name]._mealTimes = {};
+  P[d.name]._mealTimes[slot] = timeVal;
+  // Also save scheduled meal type permanently
+  if (!P[d.name]._meals) P[d.name]._meals = {};
+  P[d.name]._meals[slot] = d.meals[slot] || 1;
+  saveProfiles();
+  renderBoard();
+  // Show a quick confirmation
+  const input = event && event.target;
+  if (input) {
+    input.style.borderColor = 'var(--ff-green)';
+    setTimeout(function() { if(input) input.style.borderColor = 'var(--ff-border)'; }, 1000);
+  }
+}
+
+function getMealTimeStatus(dogName, slot) {
+  const p = P[dogName];
+  if (!p || !p._mealTimes || !p._mealTimes[slot]) return null;
+  const timeStr = p._mealTimes[slot]; // "HH:MM"
+  if (!timeStr) return null;
+  const now = new Date();
+  const [h, m] = timeStr.split(':').map(Number);
+  const mealMins = h * 60 + m;
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const diff = mealMins - nowMins;
+  if (diff <= 0 && diff >= -30) return 'due';    // within last 30 mins
+  if (diff > 0 && diff <= 15) return 'soon';     // due in next 15 mins
+  return null;
+}
+
+function formatMealTime(timeStr) {
+  if (!timeStr) return '';
+  const [h, m] = timeStr.split(':').map(Number);
+  const ampm = h >= 12 ? 'p' : 'a';
+  const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+  return h12 + (m ? ':' + String(m).padStart(2,'0') : '') + ampm;
+}
+
+function addMealSlot() {
+  // Find the first unscheduled slot and enable it
+  const d = dogs.find(d => d.id === mealEditorDogId);
+  if (!d) return;
+  const slots = ['b', 'l', 'd'];
+  for (const slot of slots) {
+    if (!d.meals[slot]) {
+      d.meals[slot] = 1;
+      renderMealEditor(mealEditorDogId);
+      renderBoard();
+      return;
+    }
+  }
+  alert('All meal slots (Breakfast, Lunch, Dinner) are already scheduled.');
+}
+
+
+// ════════════════════════════════════════
+// MEDICATIONS
+// ════════════════════════════════════════
+let medsConfirmTarget = null; // { dogId, medIdx }
+
+function renderMedsEditor(dogId) {
+  const d = dogs.find(d => d.id === dogId);
+  if (!d) return;
+  if (!d.meds) d.meds = [];
+  const editor = document.getElementById('medsEditor');
+  if (!editor) return;
+
+  if (!d.meds.length) {
+    editor.innerHTML = '<div style="font-size:11px;color:var(--ff-muted);font-style:italic;">No medications today.</div>';
+    return;
+  }
+
+  editor.innerHTML = d.meds.map(function(med, i) {
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 9px;background:rgba(156,39,176,0.08);border:1px solid rgba(156,39,176,0.25);border-radius:6px;">' +
+      '<span style="font-size:12px;flex:1;color:var(--ff-text);">💊 ' + med.name + '</span>' +
+      '<span style="font-size:10px;color:' + (med.administered ? 'var(--ff-green)' : '#ce93d8') + ';font-weight:700;">' +
+        (med.administered ? '✅ Given' : '⏳ Pending') +
+      '</span>' +
+      '<button onclick="removeMed(&quot;' + dogId + '&quot;,' + i + ')" style="background:none;border:1px solid rgba(224,82,82,0.3);border-radius:4px;color:rgba(224,82,82,0.5);font-size:10px;padding:2px 6px;cursor:pointer;">&#x2715;</button>' +
+    '</div>';
+  }).join('');
+}
+
+function addMed() {
+  const input = document.getElementById('newMedInput');
+  if (!input || !input.value.trim()) return;
+  const d = dogs.find(d => d.id === mealEditorDogId);
+  if (!d) return;
+  if (!d.meds) d.meds = [];
+  d.meds.push({ name: input.value.trim(), administered: false });
+  input.value = '';
+  renderMedsEditor(mealEditorDogId);
+  renderBoard();
+  saveState();
+}
+
+function removeMed(dogId, idx) {
+  const d = dogs.find(d => d.id === dogId);
+  if (!d || !d.meds) return;
+  d.meds.splice(idx, 1);
+  renderMedsEditor(dogId);
+  renderBoard();
+  saveState();
+}
+
+function openMedsConfirm(dogId, medIdx) {
+  const d = dogs.find(d => d.id === dogId);
+  if (!d || !d.meds || !d.meds[medIdx]) return;
+  medsConfirmTarget = { dogId, medIdx };
+  const med = d.meds[medIdx];
+  document.getElementById('medsConfirmBody').innerHTML =
+    '<strong style="color:#ce93d8;">' + d.name + '</strong><br>' +
+    'Medication: <strong>' + med.name + '</strong><br><br>' +
+    'Confirm this has been administered?';
+  document.getElementById('medsConfirmModal').style.display = 'flex';
+}
+
+function closeMedsConfirm() {
+  document.getElementById('medsConfirmModal').style.display = 'none';
+  medsConfirmTarget = null;
+}
+
+function confirmMedAdmin() {
+  if (!medsConfirmTarget) return;
+  const d = dogs.find(d => d.id === medsConfirmTarget.dogId);
+  if (!d || !d.meds) return;
+  d.meds[medsConfirmTarget.medIdx].administered = true;
+  closeMedsConfirm();
+  renderBoard();
+  saveState();
 }
 
 // ════════════════════════════════════════
@@ -3068,7 +3532,8 @@ function saveState() {
         groom: d.groom,
         walks: d.walks,
         energy: d.energy,
-        notes: d.notes  // today's daily notes only
+        notes: d.notes,
+        meds: d.meds || []
       };
     });
     localStorage.setItem(LS_DOGS, JSON.stringify(dogState));
@@ -3337,6 +3802,20 @@ setTimeout(loadStaffSchedule, 1000);
     <button class="modal-close" onclick="document.getElementById('incidentViewModal').style.display='none'">✕</button>
     <div class="modal-title">📋 Incident History</div>
     <div id="incidentViewBody"></div>
+  </div>
+</div>
+
+
+<!-- MEDS CONFIRM MODAL -->
+<div class="modal-overlay" id="medsConfirmModal" style="display:none;" onclick="if(event.target===this)closeMedsConfirm()">
+  <div class="modal" style="max-width:360px;">
+    <button class="modal-close" onclick="closeMedsConfirm()">✕</button>
+    <div class="modal-title">💊 Administer Medication</div>
+    <div id="medsConfirmBody" style="font-size:13px;color:var(--ff-text);margin-bottom:16px;line-height:1.6;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeMedsConfirm()">Cancel</button>
+      <button class="btn btn-sm" style="background:#9c27b0;color:white;" onclick="confirmMedAdmin()">✅ Mark as Administered</button>
+    </div>
   </div>
 </div>
 
